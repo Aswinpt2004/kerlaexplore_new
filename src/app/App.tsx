@@ -4,7 +4,8 @@ import {
   ArrowRight, Users, Calendar, DollarSign, MessageCircle, Check, X,
   Bell, Home, Map, Heart, User, Send, Phone, Video, MoreHorizontal,
   Plus, Filter, Navigation, Award, Briefcase, TrendingUp, Package,
-  ChevronDown, Mic, Image, Smile, Menu, LogOut, Settings
+  ChevronDown, Mic, Image, Smile, Menu, LogOut, Settings, Sparkles, Bot,
+  Zap, MapPinCheck, AlertCircle
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -23,9 +24,120 @@ type Screen =
   | "nearby-requests"
   | "counter-offer"
   | "become-guide"
-  | "guide-registration-success";
+  | "guide-registration-success"
+  | "ai-trip-planner"
+  | "ai-trip-chat"
+  | "ai-generated-itinerary";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
+
+// AI Trip Planning Data Structures
+const AI_ITINERARY_TEMPLATES = [
+  {
+    id: "beach-wellness",
+    name: "Beach & Wellness Retreat",
+    destinations: ["Varkala", "Alleppey (Alappuzha)"],
+    activities: ["Beach walks", "Ayurveda spa", "Yoga sessions", "Lighthouse visit", "Backwater cruise"],
+    guideTags: ["Wellness", "Ayurveda Wellness", "Beach & Water Sports"],
+    description: "Relax and rejuvenate on Kerala's serene beaches with Ayurveda treatments",
+    budget: { min: 8000, max: 15000 },
+  },
+  {
+    id: "culture-food",
+    name: "Culture & Culinary Journey",
+    destinations: ["Kochi", "Munnar"],
+    activities: ["Chinese fishing nets", "Spice market tour", "Kathakali performance", "Tea plantation", "Local cuisine tasting"],
+    guideTags: ["Culture", "History & Culture", "Local Cuisine", "Tea Estate Tours"],
+    description: "Immerse in Kerala's rich cultural heritage and authentic food experiences",
+    budget: { min: 7000, max: 13000 },
+  },
+  {
+    id: "adventure-trek",
+    name: "Adventure & Trekking",
+    destinations: ["Munnar", "Wayanad", "Thekkady"],
+    activities: ["Mountain trekking", "Waterfall hikes", "Wildlife safari", "Spice plantation walk", "Tea estate trek"],
+    guideTags: ["Trekking & Hiking", "Wildlife Safari", "Spice Plantations"],
+    description: "Experience the thrill of Kerala's Western Ghats with challenging treks",
+    budget: { min: 9000, max: 16000 },
+  },
+  {
+    id: "backwater-houseboat",
+    name: "Backwater & Houseboat Experience",
+    destinations: ["Alleppey (Alappuzha)", "Kochi"],
+    activities: ["Houseboat cruise", "Village canoe rides", "Fishing experience", "Coconut plantation tour", "Sunset viewing"],
+    guideTags: ["Backwater Tours", "Houseboat Stays"],
+    description: "Navigate Kerala's iconic backwaters on traditional houseboats",
+    budget: { min: 10000, max: 18000 },
+  },
+  {
+    id: "family-fun",
+    name: "Family Adventure Pack",
+    destinations: ["Kochi", "Munnar", "Thekkady"],
+    activities: ["Spice garden exploration", "Tea factory tour", "Wildlife spotting", "Cooking classes", "Market visits"],
+    guideTags: ["Culture", "Tea Estate Tours", "Spice Plantations"],
+    description: "Perfect for families wanting diverse experiences and relaxed pace",
+    budget: { min: 11000, max: 19000 },
+  },
+  {
+    id: "luxury-escape",
+    name: "Luxury Kerala Experience",
+    destinations: ["Varkala", "Munnar", "Alleppey (Alappuzha)"],
+    activities: ["Premium Ayurveda spa", "Private guided tours", "Gourmet dining", "Heritage resort stays", "Sunset yacht cruise"],
+    guideTags: ["Ayurveda Wellness", "History & Culture"],
+    description: "Indulge in Kerala's finest offerings with premium services",
+    budget: { min: 20000, max: 50000 },
+  },
+  {
+    id: "photographer-special",
+    name: "Photography & Nature",
+    destinations: ["Wayanad", "Munnar", "Varkala"],
+    activities: ["Golden hour shoots", "Waterfall photography", "Wildlife photography", "Tea garden sessions", "Sunset points"],
+    guideTags: ["Photography", "Trekking & Hiking"],
+    description: "Capture Kerala's stunning landscapes and golden moments",
+    budget: { min: 6000, max: 12000 },
+  },
+];
+
+// Daily activity templates based on day number and destination
+const getDayActivities = (day: number, destinations: string[], interests: string[]): { time: string; activity: string; duration: string }[] => {
+  const activities: { [key: string]: { [key: number]: string[] } } = {
+    "Kochi": {
+      1: ["6:00 AM - Chinese Fishing Nets at sunrise", "9:00 AM - Fort Kochi heritage walk", "12:00 PM - Traditional Kerala lunch", "3:00 PM - Spice market exploration", "6:00 PM - Sunset at waterfront"],
+      2: ["7:00 AM - Ayurveda wellness session", "10:00 AM - Jewish synagogue & antique street", "1:00 PM - Seafood lunch at dock", "4:00 PM - Paradesi synagogue visit", "7:00 PM - Evening backwater cruise"],
+    },
+    "Alleppey (Alappuzha)": {
+      1: ["7:00 AM - Houseboat boarding & breakfast", "10:00 AM - Narrow canals exploration", "1:00 PM - Lunch on houseboat", "3:00 PM - Village visit & coconut farm", "6:00 PM - Sunset viewing from deck"],
+      2: ["6:00 AM - Early morning bird watching", "9:00 AM - Fishing demonstration", "12:00 PM - Lunch with local catch", "2:00 PM - Ayurveda massage", "7:00 PM - Dinner under stars"],
+    },
+    "Munnar": {
+      1: ["6:00 AM - Tea plantation sunrise walk", "9:00 AM - Tea factory tour & tasting", "12:30 PM - Lunch at estate", "3:00 PM - Waterfall trek (Eravikulam)", "6:00 PM - Mountain sunset view"],
+      2: ["7:00 AM - Guided tea garden walk", "10:00 AM - Photography session", "1:00 PM - Traditional meal", "3:30 PM - Anamudi peak hike", "6:30 PM - Campfire dinner"],
+    },
+    "Thekkady": {
+      1: ["5:30 AM - Periyar Lake wildlife safari", "9:00 AM - Spice plantation tour", "12:00 PM - Lunch with spice curry", "2:00 PM - Spice factory visit", "5:00 PM - Forest evening walk"],
+      2: ["6:00 AM - Early safari for elephant spotting", "10:00 AM - Cardamom valley trek", "1:00 PM - Traditional lunch", "3:00 PM - Ayurveda center visit", "6:00 PM - Bonfire with local stories"],
+    },
+    "Varkala": {
+      1: ["7:00 AM - Beach meditation & yoga", "9:00 AM - Cliff walk exploration", "12:00 PM - Seafood lunch", "3:00 PM - Ayurveda oil massage", "6:00 PM - Sunset beach walk"],
+      2: ["6:00 AM - Sunrise beach session", "9:00 AM - Janardhan temple visit", "12:00 PM - Beach shack lunch", "3:30 PM - Swimming & beach time", "7:00 PM - Beachside dinner"],
+    },
+    "Wayanad": {
+      1: ["6:00 AM - Sunrise hike to viewpoint", "9:00 AM - Waterfall trek (Soochipara)", "1:00 PM - Picnic lunch at waterfall", "3:00 PM - Spice garden walk", "6:00 PM - Village interaction"],
+      2: ["7:00 AM - Coffee plantation tour", "10:00 AM - Adventure activities", "1:00 PM - Traditional meal", "3:00 PM - Wildlife sanctuary visit", "6:00 PM - Sunset point photography"],
+    },
+  };
+
+  const result: { time: string; activity: string; duration: string }[] = [];
+  for (const dest of destinations) {
+    if (activities[dest] && activities[dest][day]) {
+      activities[dest][day].forEach((activity) => {
+        const [time, desc] = activity.split(" - ");
+        result.push({ time, activity: desc, duration: "2-3 hours" });
+      });
+    }
+  }
+  return result.length > 0 ? result : [{ time: "Morning", activity: "Local exploration and breakfast", duration: "3 hours" }];
+};
 
 const DESTINATIONS = [
   { id: 1, name: "Kochi", image: "photo-1506905925346-21bda4d32df4", country: "Kerala", guides: 48, rating: 4.9 },
@@ -318,6 +430,10 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("destination")}>Explore</a>
+            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium flex items-center gap-1" onClick={() => onNavigate("ai-trip-planner")}>
+              <Sparkles className="w-4 h-4 text-[#0ea472]" />
+              AI Planner
+            </a>
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("traveler-dashboard")}>My Trips</a>
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-dashboard")}>Guide Dashboard</a>
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("become-guide")}>Become a Guide</a>
@@ -369,8 +485,8 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             <Btn variant="secondary" onClick={() => onNavigate("packages")} className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30">
               Explore Packages
             </Btn>
-            <Btn variant="secondary" onClick={() => onNavigate("custom-trip")} className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30">
-              Create Custom Trip <ArrowRight className="w-4 h-4" />
+            <Btn variant="secondary" onClick={() => onNavigate("ai-trip-planner")} className="bg-[#FFD700] text-gray-900 border-[#FFD700] hover:bg-[#FFC700] font-semibold">
+              AI Trip Planner <Sparkles className="w-4 h-4" />
             </Btn>
             <Btn variant="secondary" onClick={() => onNavigate("become-guide")} className="bg-[#0ea472] text-white border-[#0ea472] hover:bg-[#0d8f5f]">
               Become a Guide <Award className="w-4 h-4" />
@@ -403,6 +519,41 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               </div>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* AI Trip Planner Section */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="bg-gradient-to-br from-[#FFD700] to-[#FFC700] rounded-3xl p-12 text-gray-900">
+          <div className="max-w-3xl">
+            <div className="flex items-center gap-2 mb-4">
+              <Sparkles className="w-6 h-6" />
+              <span className="text-sm font-bold uppercase tracking-wide">POWERED BY AI</span>
+            </div>
+            <h2 className="text-4xl font-bold mb-4" style={{ fontFamily: "Fraunces, serif" }}>
+              Personalized Kerala Itineraries in Seconds
+            </h2>
+            <p className="text-lg mb-8 opacity-90">
+              Tell our AI your preferences, travel style, and budget. Get a custom-curated Kerala adventure matched with the perfect guides—all tailored to your unique travel goals.
+            </p>
+            <div className="grid grid-cols-3 gap-6 mb-8">
+              <div>
+                <p className="text-3xl font-bold mb-1">7</p>
+                <p className="text-sm font-semibold">Itinerary Templates</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold mb-1">100%</p>
+                <p className="text-sm font-semibold">Customizable</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold mb-1">24/7</p>
+                <p className="text-sm font-semibold">AI Assistance</p>
+              </div>
+            </div>
+            <Btn size="lg" onClick={() => onNavigate("ai-trip-planner")} className="bg-gray-900 text-white hover:bg-gray-800">
+              Try AI Planner Now <ArrowRight className="w-4 h-4" />
+            </Btn>
+          </div>
         </div>
       </section>
 
@@ -1950,12 +2101,366 @@ function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen
   );
 }
 
+// ─── Screen: AI Trip Planner ──────────────────────────────────────────────────
+
+function AITripPlannerScreen({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
+  const [duration, setDuration] = useState("3-4");
+  const [budget, setBudget] = useState("10000-20000");
+  const [travelStyle, setTravelStyle] = useState("relaxed");
+  const [groupSize, setGroupSize] = useState("2-3");
+  const [interests, setInterests] = useState<string[]>([]);
+
+  const toggleInterest = (interest: string) => {
+    if (interests.includes(interest)) {
+      setInterests(interests.filter(i => i !== interest));
+    } else {
+      setInterests([...interests, interest]);
+    }
+  };
+
+  const interests_list = [
+    "Culture & History",
+    "Adventure & Trekking",
+    "Beaches & Relaxation",
+    "Food & Cuisine",
+    "Wellness & Spa",
+    "Photography",
+    "Wildlife",
+    "Family Activities",
+  ];
+
+  const handleGetRecommendations = () => {
+    if (interests.length === 0) return;
+    const preferences = { duration, budget, travelStyle, groupSize, interests };
+    onNavigate("ai-trip-chat", preferences);
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <span className="text-sm font-semibold text-gray-600">AI Trip Planner</span>
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* Hero */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="w-5 h-5 text-[#0ea472]" />
+            <span className="text-sm font-semibold text-[#0ea472]">AI Powered</span>
+          </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Fraunces, serif" }}>
+            Plan Your Kerala Adventure
+          </h1>
+          <p className="text-gray-600">Tell us your preferences and our AI will create a personalized itinerary matched with the perfect guides.</p>
+        </div>
+
+        {/* Duration */}
+        <div className="mb-8">
+          <label className="text-sm font-semibold text-gray-700 block mb-3">Trip Duration</label>
+          <div className="grid grid-cols-4 gap-2">
+            {["1-2", "3-4", "5-6", "7+"].map(d => (
+              <button key={d} onClick={() => setDuration(d)} className={`py-3 px-2 rounded-lg border-2 text-sm font-semibold transition-all text-center ${duration === d ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]" : "border-gray-200 hover:border-gray-300"}`}>
+                {d} days
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Budget */}
+        <div className="mb-8">
+          <label className="text-sm font-semibold text-gray-700 block mb-3">Budget per Person</label>
+          <div className="grid grid-cols-2 gap-2">
+            {["5000-10000", "10000-20000", "20000-50000", "50000+"].map(b => (
+              <button key={b} onClick={() => setBudget(b)} className={`py-3 px-3 rounded-lg border-2 text-xs font-semibold transition-all text-center ${budget === b ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]" : "border-gray-200 hover:border-gray-300"}`}>
+                ₹{b}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Travel Style */}
+        <div className="mb-8">
+          <label className="text-sm font-semibold text-gray-700 block mb-3">Travel Style</label>
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { id: "relaxed", label: "Relaxed", icon: "😌" },
+              { id: "active", label: "Active", icon: "⚡" },
+              { id: "adventurous", label: "Adventurous", icon: "🏔️" },
+              { id: "cultural", label: "Cultural", icon: "🏛️" },
+            ].map(style => (
+              <button key={style.id} onClick={() => setTravelStyle(style.id)} className={`py-3 px-3 rounded-lg border-2 text-sm font-semibold transition-all flex items-center justify-center gap-2 ${travelStyle === style.id ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                {style.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Group Size */}
+        <div className="mb-8">
+          <label className="text-sm font-semibold text-gray-700 block mb-3">Group Size</label>
+          <div className="grid grid-cols-3 gap-2">
+            {["Solo", "2-3", "4-5", "6+"].map(g => (
+              <button key={g} onClick={() => setGroupSize(g)} className={`py-3 px-2 rounded-lg border-2 text-sm font-semibold transition-all text-center ${groupSize === g ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]" : "border-gray-200 hover:border-gray-300"}`}>
+                {g}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Interests */}
+        <div className="mb-12">
+          <label className="text-sm font-semibold text-gray-700 block mb-3">What interests you? (Select at least 1)</label>
+          <div className="grid grid-cols-2 gap-2">
+            {interests_list.map(interest => (
+              <button key={interest} onClick={() => toggleInterest(interest)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${interests.includes(interest) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                {interest}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Submit Button */}
+        <Btn size="lg" className="w-full mb-8" onClick={handleGetRecommendations} disabled={interests.length === 0}>
+          Get AI Recommendations <Sparkles className="w-4 h-4" />
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── Screen: AI Trip Chat ────────────────────────────────────────────────────
+
+function AITripChatScreen({ onNavigate, preferences }: { onNavigate: (s: Screen, data?: any) => void; preferences?: any }) {
+  const [messages, setMessages] = useState<{ role: "user" | "ai"; text: string }[]>([
+    { role: "ai", text: "Great! Based on your preferences, I've analyzed Kerala's top experiences. Let me ask a few follow-up questions to perfect your itinerary..." },
+    { role: "ai", text: "Would you like more adventure activities or prefer a relaxed pace with cultural experiences?" },
+  ]);
+  const [input, setInput] = useState("");
+
+  const handleSendMessage = (text?: string) => {
+    const msg = text || input;
+    if (!msg.trim()) return;
+
+    setMessages(prev => [...prev, { role: "user", text: msg }]);
+    setInput("");
+
+    // Simulate AI response
+    setTimeout(() => {
+      const responses = [
+        "Perfect! Based on that, I'm leaning towards a tea plantation and wellness focus for you.",
+        "Excellent choice! I'm creating your personalized itinerary now with the best guides.",
+        "I've found 3 perfect guides that match your interests and budget. Let me show you the full itinerary!",
+      ];
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      setMessages(prev => [...prev, { role: "ai", text: randomResponse }]);
+    }, 500);
+  };
+
+  const handleGenerateItinerary = () => {
+    onNavigate("ai-generated-itinerary", preferences);
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => onNavigate("ai-trip-planner")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <div className="flex items-center gap-2">
+            <Bot className="w-4 h-4 text-[#0ea472]" />
+            <span className="text-sm font-semibold text-gray-600">AI Planning Assistant</span>
+          </div>
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="flex-1 max-w-lg mx-auto w-full px-4 py-6 overflow-y-auto space-y-4">
+        {messages.map((msg, idx) => (
+          <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div className={`max-w-xs px-4 py-3 rounded-2xl ${msg.role === "user" ? "bg-[#0ea472] text-white rounded-br-none" : "bg-gray-100 text-gray-900 rounded-bl-none"}`}>
+              <p className="text-sm">{msg.text}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Input & Actions */}
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-4 max-w-lg mx-auto w-full">
+        <div className="flex gap-2 mb-3">
+          <input
+            type="text"
+            placeholder="Type your response..."
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleSendMessage()}
+            className="flex-1 bg-gray-100 border border-gray-200 rounded-xl px-4 py-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30"
+          />
+          <button onClick={() => handleSendMessage()} className="bg-[#0ea472] hover:bg-[#0d8f5f] text-white rounded-xl w-10 h-10 flex items-center justify-center transition-colors">
+            <Send className="w-4 h-4" />
+          </button>
+        </div>
+        <Btn size="sm" className="w-full" onClick={handleGenerateItinerary}>
+          Generate My Itinerary <ArrowRight className="w-4 h-4" />
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ─── Screen: AI Generated Itinerary ─────────────────────────────────────────
+
+function AIGeneratedItineraryScreen({ onNavigate, preferences }: { onNavigate: (s: Screen, data?: any) => void; preferences?: any }) {
+  // Match preferences to template
+  const template = (() => {
+    if (preferences?.interests?.includes("Wellness & Spa")) return AI_ITINERARY_TEMPLATES[0];
+    if (preferences?.interests?.includes("Culture & History")) return AI_ITINERARY_TEMPLATES[1];
+    if (preferences?.interests?.includes("Adventure & Trekking")) return AI_ITINERARY_TEMPLATES[2];
+    if (preferences?.interests?.includes("Beaches & Relaxation")) return AI_ITINERARY_TEMPLATES[0];
+    if (preferences?.interests?.includes("Photography")) return AI_ITINERARY_TEMPLATES[6];
+    return AI_ITINERARY_TEMPLATES[4]; // Default to family
+  })();
+
+  const days = parseInt(preferences?.duration?.split("-")[0] || "3");
+  const matchedGuides = GUIDES.filter(g => template.guideTags.some(tag => g.specialty.includes(tag))).slice(0, 2);
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => onNavigate("ai-trip-chat", preferences)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <span className="text-sm font-semibold text-gray-600">Your AI Itinerary</span>
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+      </div>
+
+      <div className="max-w-lg mx-auto px-4 py-8">
+        {/* Trip Summary */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <Zap className="w-5 h-5 text-[#0ea472]" />
+            <span className="text-sm font-semibold text-[#0ea472]">AI Curated</span>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2" style={{ fontFamily: "Fraunces, serif" }}>
+            {template.name}
+          </h1>
+          <p className="text-gray-600 mb-4">{template.description}</p>
+
+          <div className="grid grid-cols-2 gap-3 mb-4">
+            <div className="p-3 bg-blue-50 rounded-lg">
+              <p className="text-xs text-gray-500">Duration</p>
+              <p className="font-bold text-gray-900">{days} days</p>
+            </div>
+            <div className="p-3 bg-green-50 rounded-lg">
+              <p className="text-xs text-gray-500">Budget</p>
+              <p className="font-bold text-gray-900">₹{template.budget.min}-{template.budget.max}</p>
+            </div>
+          </div>
+
+          <div className="p-3 bg-gray-50 rounded-lg mb-4">
+            <p className="text-xs text-gray-500 mb-1">Destinations</p>
+            <p className="text-sm font-semibold text-gray-900">{template.destinations.join(" → ")}</p>
+          </div>
+        </div>
+
+        {/* Day-by-day itinerary */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Day-by-Day Plan</h3>
+          {Array.from({ length: days }).map((_, dayNum) => {
+            const activities = getDayActivities(dayNum + 1, template.destinations, preferences?.interests || []);
+            return (
+              <div key={dayNum} className="mb-4 p-4 border border-gray-200 rounded-lg">
+                <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                  <MapPinCheck className="w-4 h-4 text-[#0ea472]" />
+                  Day {dayNum + 1} - {template.destinations[dayNum % template.destinations.length]}
+                </h4>
+                <div className="space-y-2">
+                  {activities.slice(0, 4).map((act, idx) => (
+                    <div key={idx} className="flex gap-3 text-sm">
+                      <span className="text-[#0ea472] font-semibold whitespace-nowrap">{act.time}</span>
+                      <div>
+                        <p className="font-medium text-gray-900">{act.activity}</p>
+                        <p className="text-xs text-gray-500">{act.duration}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Recommended Guides */}
+        <div className="mb-8">
+          <h3 className="text-lg font-bold text-gray-900 mb-4">Recommended Guides</h3>
+          {matchedGuides.map(guide => (
+            <div key={guide.id} className="mb-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-shadow cursor-pointer">
+              <div className="flex gap-3 mb-2">
+                <div className="w-12 h-12 rounded-full bg-gray-300 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="font-bold text-gray-900">{guide.name}</p>
+                  <p className="text-xs text-gray-600">{guide.location}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                    <span className="text-xs font-semibold text-gray-700">{guide.rating}</span>
+                    <span className="text-xs text-gray-500">({guide.reviews} reviews)</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-bold text-gray-900">₹{guide.price}</p>
+                  <p className="text-xs text-gray-500">{guide.duration}</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 mb-2">{guide.specialty}</p>
+              <Btn size="sm" className="w-full" onClick={() => onNavigate("chat")}>
+                Chat with Guide <MessageCircle className="w-3 h-3" />
+              </Btn>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA Buttons */}
+        <div className="flex flex-col gap-3 mb-8">
+          <Btn size="lg" className="w-full" onClick={() => onNavigate("custom-trip")}>
+            Refine This Plan <ArrowRight className="w-4 h-4" />
+          </Btn>
+          <button onClick={() => onNavigate("landing")} className="px-6 py-3 text-[#0ea472] font-semibold hover:bg-[#f0faf6] rounded-xl transition-colors">
+            Back to Home
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
+  const [screenData, setScreenData] = useState<any>(null);
 
-  const navigate = (s: Screen) => setScreen(s);
+  const navigate = (s: Screen, data?: any) => {
+    setScreen(s);
+    if (data) setScreenData(data);
+  };
 
   return (
     <div className="font-sans" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
@@ -1972,6 +2477,9 @@ export default function App() {
       {screen === "nearby-requests" && <NearbyRequestsScreen onNavigate={navigate} />}
       {screen === "become-guide" && <BecomeGuideScreen onNavigate={navigate} />}
       {screen === "guide-registration-success" && <GuideRegistrationSuccessScreen onNavigate={navigate} />}
+      {screen === "ai-trip-planner" && <AITripPlannerScreen onNavigate={navigate} />}
+      {screen === "ai-trip-chat" && <AITripChatScreen onNavigate={navigate} preferences={screenData} />}
+      {screen === "ai-generated-itinerary" && <AIGeneratedItineraryScreen onNavigate={navigate} preferences={screenData} />}
     </div>
   );
 }
