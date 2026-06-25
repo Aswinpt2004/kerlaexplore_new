@@ -21,103 +21,117 @@ type Screen =
   | "chat"
   | "guide-dashboard"
   | "nearby-requests"
-  | "counter-offer";
+  | "counter-offer"
+  | "become-guide"
+  | "guide-registration-success";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 const DESTINATIONS = [
-  { id: 1, name: "Kyoto, Japan", image: "photo-1545569341-9eb8b30979d9", country: "Japan", guides: 48, rating: 4.9 },
-  { id: 2, name: "Amalfi Coast", image: "photo-1533587851505-d119e13fa0d7", country: "Italy", guides: 32, rating: 4.8 },
-  { id: 3, name: "Marrakech", image: "photo-1539020140153-e479b8e7b4cc", country: "Morocco", guides: 27, rating: 4.7 },
-  { id: 4, name: "Patagonia", image: "photo-1501854140801-50d01698950b", country: "Argentina", guides: 19, rating: 4.9 },
-  { id: 5, name: "Santorini", image: "photo-1570077188670-e3a8d69ac5ff", country: "Greece", guides: 41, rating: 4.8 },
-  { id: 6, name: "Bali", image: "photo-1537996194471-e657df975ab4", country: "Indonesia", guides: 63, rating: 4.7 },
+  { id: 1, name: "Kochi", image: "photo-1506905925346-21bda4d32df4", country: "Kerala", guides: 48, rating: 4.9 },
+  { id: 2, name: "Alleppey (Alappuzha)", image: "photo-1511632765486-a01980e01a18", country: "Kerala", guides: 52, rating: 4.8 },
+  { id: 3, name: "Munnar", image: "photo-1507003211169-0a1dd7228f2d", country: "Kerala", guides: 35, rating: 4.7 },
+  { id: 4, name: "Thekkady", image: "photo-1501854140801-50d01698950b", country: "Kerala", guides: 28, rating: 4.9 },
+  { id: 5, name: "Varkala", image: "photo-1570077188670-e3a8d69ac5ff", country: "Kerala", guides: 41, rating: 4.8 },
+  { id: 6, name: "Wayanad", image: "photo-1537996194471-e657df975ab4", country: "Kerala", guides: 39, rating: 4.7 },
 ];
 
 const GUIDES = [
   {
-    id: 1, name: "Hiroshi Tanaka", avatar: "photo-1507003211169-0a1dd7228f2d",
-    location: "Kyoto, Japan", rating: 4.97, reviews: 312, experience: 9,
-    languages: ["English", "Japanese", "Mandarin"], price: 85, duration: "Full Day",
-    specialty: "Traditional Culture & Tea Ceremony", verified: true,
-    bio: "Born and raised in Kyoto, I offer authentic glimpses into Japan's living heritage — from hidden temples to sake breweries most tourists never find.",
-    tags: ["Culture", "History", "Food"],
+    id: 1, name: "Rajesh Nair", avatar: "photo-1507003211169-0a1dd7228f2d",
+    location: "Kochi, Kerala", rating: 4.97, reviews: 312, experience: 9,
+    languages: ["English", "Malayalam", "Hindi"], price: 1800, duration: "Full Day",
+    specialty: "Backwater Tours & Cultural Heritage", verified: true,
+    bio: "Born and raised in Kochi, I offer authentic glimpses into Kerala's backwater lifestyle. From traditional houseboat rides to spice markets, I show you the real Kerala beyond the tourist trails.",
+    tags: ["Backwaters", "Culture", "Food"],
     images: ["photo-1545569341-9eb8b30979d9", "photo-1528360983277-13d401cdc186", "photo-1542051841857-5f90071e7989"],
     itinerary: [
-      { time: "8:00 AM", title: "Fushimi Inari Shrine at dawn", desc: "Beat the crowds at one of Japan's most iconic sites." },
-      { time: "10:30 AM", title: "Nishiki Market tasting walk", desc: "Sample street food and local specialties." },
-      { time: "12:30 PM", title: "Kaiseki lunch in Gion", desc: "Traditional multi-course meal in a preserved machiya." },
-      { time: "2:30 PM", title: "Arashiyama Bamboo Grove", desc: "Walk the iconic grove and visit Tenryu-ji gardens." },
-      { time: "5:00 PM", title: "Private tea ceremony", desc: "Participate in a ceremony led by a certified tea master." },
+      { time: "8:00 AM", title: "Fort Kochi heritage walk", desc: "Explore the historic streets with colonial architecture and ancient synagogues." },
+      { time: "10:30 AM", title: "Chinese Fishing Nets experience", desc: "Learn about the iconic fishing technique used for centuries." },
+      { time: "12:30 PM", title: "Traditional Kerala lunch", desc: "Authentic Kerala cuisine with fresh seafood and coconut preparations." },
+      { time: "2:30 PM", title: "Spice market tour", desc: "Walk through the famous spice markets of Mattancherry." },
+      { time: "5:00 PM", title: "Sunset backwater cruise", desc: "Peaceful boat ride through the serene backwaters at golden hour." },
     ],
-    inclusions: ["Private transportation", "Kaiseki lunch", "Tea ceremony", "Skip-the-line passes", "Photo spots guide"],
+    inclusions: ["Private boat rental", "Kerala lunch", "Spice market guide", "Photography stops", "Hotel pickup"],
   },
   {
-    id: 2, name: "Sofia Ricci", avatar: "photo-1438761681033-6461ffad8d80",
-    location: "Amalfi, Italy", rating: 4.94, reviews: 218, experience: 7,
-    languages: ["English", "Italian", "French"], price: 110, duration: "Full Day",
-    specialty: "Coastal Villages & Cuisine", verified: true,
-    bio: "I grew up with the sea on my doorstep. Let me show you the Amalfi my family has loved for generations — from secret coves to nonna's recipes.",
-    tags: ["Coastal", "Food", "Photography"],
+    id: 2, name: "Anjali Sharma", avatar: "photo-1438761681033-6461ffad8d80",
+    location: "Alleppey, Kerala", rating: 4.94, reviews: 218, experience: 7,
+    languages: ["English", "Malayalam", "German"], price: 2000, duration: "Full Day",
+    specialty: "Houseboat Cruises & Ayurveda", verified: true,
+    bio: "I grew up in the backwaters of Alleppey. Let me show you the serene beauty of Kerala's waterways — from houseboat experiences to authentic Ayurveda wellness centers.",
+    tags: ["Backwaters", "Wellness", "Photography"],
     images: ["photo-1533587851505-d119e13fa0d7", "photo-1551634979-2b11f8c218da", "photo-1516483638261-f4dbaf036963"],
     itinerary: [
-      { time: "9:00 AM", title: "Positano panorama walk", desc: "Golden hour light on the pastel cliffside." },
-      { time: "11:00 AM", title: "Ravello gardens", desc: "UNESCO villa gardens with Mediterranean views." },
-      { time: "1:00 PM", title: "Seafood lunch on the dock", desc: "Fresh catch at a family-run trattoria." },
-      { time: "3:30 PM", title: "Amalfi Cathedral & old town", desc: "Byzantine mosaics and limoncello tasting." },
-      { time: "5:30 PM", title: "Sunset boat ride", desc: "Private boat through the sea caves at golden hour." },
+      { time: "9:00 AM", title: "Backwater houseboat boarding", desc: "Begin your journey on a traditional Kerala houseboat." },
+      { time: "11:00 AM", title: "Village canal cruise", desc: "Scenic ride through narrow canals and coconut groves." },
+      { time: "1:00 PM", title: "Authentic Kerala lunch on boat", desc: "Fresh catch prepared with traditional Kerala spices." },
+      { time: "3:30 PM", title: "Ayurveda center visit", desc: "Experience traditional Kerala Ayurveda treatments and massage." },
+      { time: "5:30 PM", title: "Sunset viewing deck", desc: "Relax on the houseboat as the sun sets over the backwaters." },
     ],
-    inclusions: ["Boat rental", "Seafood lunch", "Limoncello tasting", "Garden entry", "Professional photos"],
+    inclusions: ["Houseboat rental", "Kerala meals", "Ayurveda session", "Village visit", "Professional photos"],
   },
   {
-    id: 3, name: "Fatima El-Amin", avatar: "photo-1494790108377-be9c29b29330",
-    location: "Marrakech, Morocco", rating: 4.91, reviews: 176, experience: 11,
-    languages: ["English", "Arabic", "French", "Berber"], price: 65, duration: "Full Day",
-    specialty: "Medina & Souks & Desert Culture", verified: true,
-    bio: "A Marrakchi storyteller — I navigate the labyrinthine medina without maps and know exactly whose tagine will change your life.",
-    tags: ["Culture", "Markets", "Architecture"],
+    id: 3, name: "Priya Menon", avatar: "photo-1494790108377-be9c29b29330",
+    location: "Munnar, Kerala", rating: 4.91, reviews: 176, experience: 11,
+    languages: ["English", "Malayalam", "Tamil"], price: 1600, duration: "Full Day",
+    specialty: "Tea Plantations & Hill Station Trekking", verified: true,
+    bio: "A Munnar native storyteller — I navigate the tea gardens and mountains intimately, and know exactly where to find the best tea estates and hidden waterfall trails.",
+    tags: ["Trekking", "Tea Estates", "Nature"],
     images: ["photo-1539020140153-e479b8e7b4cc", "photo-1548013146-72479768bada", "photo-1518548419970-58e3b4079ab2"],
-    itinerary: [],
-    inclusions: ["Medina walk", "Souk guide", "Tagine lunch", "Artisan workshop", "Rooftop café"],
+    itinerary: [
+      { time: "8:00 AM", title: "Tea plantation walk", desc: "Explore sprawling green tea gardens and meet local pickers." },
+      { time: "10:00 AM", title: "Tea factory tour", desc: "Learn traditional tea processing at a heritage tea estate." },
+      { time: "12:30 PM", title: "Homemade lunch at plantation", desc: "Authentic hill station cuisine with fresh local ingredients." },
+      { time: "2:30 PM", title: "Eravikulam waterfall trek", desc: "Trek to pristine waterfalls in the Western Ghats." },
+      { time: "5:00 PM", title: "Sunset at mountain viewpoint", desc: "Panoramic views of the tea gardens and distant mountains." },
+    ],
+    inclusions: ["Tea tasting", "Factory tour", "Lunch at estate", "Trek guide", "Weather gear if needed"],
   },
   {
-    id: 4, name: "Mateo Vargas", avatar: "photo-1500648767791-00dcc994a43e",
-    location: "Bariloche, Argentina", rating: 4.96, reviews: 89, experience: 14,
-    languages: ["English", "Spanish", "Portuguese"], price: 95, duration: "Full Day",
-    specialty: "Patagonia Trekking & Wildlife", verified: true,
-    bio: "Certified Patagonia guide and conservationist. I've crossed the ice field three times and know every condor nesting site in the region.",
-    tags: ["Trekking", "Wildlife", "Adventure"],
+    id: 4, name: "Arjun Krishnan", avatar: "photo-1500648767791-00dcc994a43e",
+    location: "Thekkady, Kerala", rating: 4.96, reviews: 89, experience: 14,
+    languages: ["English", "Malayalam", "Hindi", "Tamil"], price: 1900, duration: "Full Day",
+    specialty: "Spice Plantation & Wildlife Safari", verified: true,
+    bio: "Certified wildlife guide with 14 years of experience. I've led hundreds of guests through Periyar wildlife sanctuary and know where to spot wild elephants, tigers, and exotic birds.",
+    tags: ["Wildlife", "Spice Farms", "Adventure"],
     images: ["photo-1501854140801-50d01698950b", "photo-1464822759023-fed622ff2c3b", "photo-1484960055659-a39d25adab7a"],
-    itinerary: [],
-    inclusions: ["All equipment", "Ranger permits", "Packed lunch", "Wildlife booklet", "Emergency kit"],
+    itinerary: [
+      { time: "6:00 AM", title: "Periyar Lake wildlife safari", desc: "Early morning boat safari to spot elephants and birds." },
+      { time: "9:00 AM", title: "Spice plantation tour", desc: "Walk through plantations of cardamom, pepper, and cinnamon." },
+      { time: "12:00 PM", title: "Traditional spice-infused lunch", desc: "Local cuisine showcasing Kerala's famous spices." },
+      { time: "2:30 PM", title: "Spice factory visit", desc: "See how spices are processed and learn harvesting techniques." },
+      { time: "5:00 PM", title: "Evening forest walk", desc: "Guided nature walk through the sanctuary for bird watching." },
+    ],
+    inclusions: ["Wildlife permit", "Spice tour", "Lunch", "Photography equipment", "Forest walk guide"],
   },
 ];
 
 const REQUESTS = [
-  { id: 1, traveler: "Alex M.", destination: "Kyoto, Japan", budget: "$300–450", date: "Jul 14–16", travelers: 2, style: "Cultural & Historical", distance: "2.1 km", avatar: "photo-1472099645785-5658abf4ff4e", notes: "Looking for hidden temples and local food experiences, not tourist traps." },
-  { id: 2, traveler: "Priya S.", destination: "Kyoto, Japan", budget: "$200–300", date: "Jul 20", travelers: 1, style: "Photography", distance: "3.4 km", avatar: "photo-1534528741775-53994a69daeb", notes: "I'm a photographer wanting golden hour shots at Fushimi Inari and Arashiyama." },
-  { id: 3, traveler: "Marcus T.", destination: "Kyoto, Japan", budget: "$500–700", date: "Aug 3–5", travelers: 4, style: "Luxury & Food", distance: "0.9 km", avatar: "photo-1507003211169-0a1dd7228f2d", notes: "Anniversary trip, family of 4. Want the best kaiseki and a private tea ceremony." },
+  { id: 1, traveler: "Alex M.", destination: "Kochi, Kerala", budget: "₹3,000–4,500", date: "Jul 14–16", travelers: 2, style: "Cultural & Backwaters", distance: "2.1 km", avatar: "photo-1472099645785-5658abf4ff4e", notes: "Looking for authentic backwater experiences and hidden cultural spots, not tourist traps." },
+  { id: 2, traveler: "Priya S.", destination: "Alleppey, Kerala", budget: "₹2,000–3,000", date: "Jul 20", travelers: 1, style: "Wellness & Photography", distance: "3.4 km", avatar: "photo-1534528741775-53994a69daeb", notes: "I want Ayurveda treatments and beautiful houseboat sunset photography shots." },
+  { id: 3, traveler: "Marcus T.", destination: "Munnar, Kerala", budget: "₹5,000–7,000", date: "Aug 3–5", travelers: 4, style: "Tea Plantations & Trekking", distance: "0.9 km", avatar: "photo-1507003211169-0a1dd7228f2d", notes: "Family trip. Want tea estate tours and hiking through beautiful tea gardens." },
 ];
 
 const MY_REQUESTS = [
-  { id: 1, destination: "Kyoto, Japan", date: "Jul 14–16", budget: "$300–450", status: "offers_received", offers: 3, travelers: 2 },
-  { id: 2, destination: "Amalfi Coast", date: "Aug 20–22", budget: "$400–600", status: "pending", offers: 0, travelers: 2 },
+  { id: 1, destination: "Kochi, Kerala", date: "Jul 14–16", budget: "₹3,000–4,500", status: "offers_received", offers: 3, travelers: 2 },
+  { id: 2, destination: "Thekkady, Kerala", date: "Aug 20–22", budget: "₹4,000–6,000", status: "pending", offers: 0, travelers: 2 },
 ];
 
 const OFFERS = [
-  { id: 1, guide: GUIDES[0], price: 340, originalBudget: "$300–450", message: "Hello! I'd love to show you the hidden side of Kyoto. My package includes a private tea ceremony at a 200-year-old machiya and a pre-dawn walk at Fushimi Inari — all within your budget.", status: "pending" },
-  { id: 2, guide: { ...GUIDES[2], name: "Kenji Watanabe", avatar: "photo-1506794778202-cad84cf45f1d", location: "Kyoto, Japan", rating: 4.88, reviews: 143, price: 290, specialty: "Street Food & Night Markets" }, price: 290, originalBudget: "$300–450", message: "Great budget for a 2-day Kyoto experience! I specialize in food and nightlife — izakayas, ramen alleys, and sake bars that locals actually go to.", status: "pending" },
-  { id: 3, guide: { ...GUIDES[3], name: "Yuki Nakamura", avatar: "photo-1560250097-0b93528c311a", location: "Kyoto, Japan", rating: 4.82, reviews: 97, price: 420, specialty: "Luxury & Traditional Arts" }, price: 420, originalBudget: "$300–450", message: "I can offer a premium cultural immersion — private access to a Noh theatre rehearsal and dinner at a Michelin-starred kaiseki restaurant. Slightly above budget but worth every yen.", status: "pending" },
+  { id: 1, guide: GUIDES[0], price: 3400, originalBudget: "₹3,000–4,500", message: "Hello! I'd love to show you the hidden side of Kochi. My package includes a backwater houseboat ride, Chinese fishing net experience, and traditional Kerala lunch — all within your budget.", status: "pending" },
+  { id: 2, guide: { ...GUIDES[1], name: "Suresh Kumar", avatar: "photo-1506794778202-cad84cf45f1d", location: "Alleppey, Kerala", rating: 4.88, reviews: 143, price: 2900, specialty: "Village Tours & Traditional Cuisine" }, price: 2900, originalBudget: "₹3,000–4,500", message: "Great budget for a Kochi experience! I specialize in authentic village tours and traditional Kerala backwater activities with local families.", status: "pending" },
+  { id: 3, guide: { ...GUIDES[2], name: "Divya Sharma", avatar: "photo-1560250097-0b93528c311a", location: "Munnar, Kerala", rating: 4.82, reviews: 97, price: 4200, specialty: "Premium Tea & Waterfall Trek" }, price: 4200, originalBudget: "₹3,000–4,500", message: "I offer a premium tea plantation experience with private estate tours and guided treks to hidden waterfalls in the Western Ghats. Slightly above budget but worth every rupee!", status: "pending" },
 ];
 
 const CHAT_MESSAGES = [
-  { id: 1, sender: "guide", name: "Hiroshi", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Hello Alex! I saw your request for a Kyoto cultural tour. I'd love to design a custom itinerary around the hidden gems — places that aren't in any guidebook. 🌸", time: "10:32 AM" },
-  { id: 2, sender: "traveler", text: "Hi Hiroshi! This looks amazing. Can we include the bamboo grove early morning before the crowds?", time: "10:45 AM" },
-  { id: 3, sender: "guide", name: "Hiroshi", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Absolutely — I always recommend starting at 6 AM. I know a side path that even most locals don't use. We can be there at first light, just the two of you.", time: "10:47 AM" },
-  { id: 4, sender: "traveler", text: "Perfect. What about the tea ceremony? Is that included in the $340?", time: "11:02 AM" },
-  { id: 5, sender: "guide", name: "Hiroshi", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Yes, fully included! The ceremony is at a 200-year-old machiya in Gion — hosted by Sensei Yamamoto, a 4th-generation tea master. It's genuinely one of a kind. 🍵", time: "11:04 AM" },
+  { id: 1, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Hello Alex! I saw your request for a Kochi cultural tour. I'd love to design a custom itinerary around the hidden backwater villages — places most tourists never discover. 🌴", time: "10:32 AM" },
+  { id: 2, sender: "traveler", text: "Hi Rajesh! This looks amazing. Can we include the Chinese fishing nets experience early morning before the crowds?", time: "10:45 AM" },
+  { id: 3, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Absolutely — I always recommend starting at 6 AM. I know fishermen who let visitors experience the nets in action. We can see it at first light, just the two of you.", time: "10:47 AM" },
+  { id: 4, sender: "traveler", text: "Perfect. What about the Ayurveda massage? Is that included in the ₹3,400?", time: "11:02 AM" },
+  { id: 5, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Yes, fully included! We'll visit an authentic Ayurveda center in Fort Kochi — run by practitioners trained in traditional Kerala methods. It's genuinely rejuvenating. 🙏", time: "11:04 AM" },
   { id: 6, sender: "traveler", text: "We're sold! Can you confirm July 14–15?", time: "11:15 AM" },
-  { id: 7, sender: "guide", name: "Hiroshi", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Both days are wide open for you. Let me send the booking confirmation and detailed itinerary now. So excited to welcome you to Kyoto! 🎋", time: "11:16 AM" },
+  { id: 7, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Both days are wide open for you. Let me send the booking confirmation and detailed itinerary now. So excited to show you the beauty of Kochi! 🛶", time: "11:16 AM" },
 ];
 
 // ─── Shared Components ─────────────────────────────────────────────────────────
@@ -306,11 +320,12 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("destination")}>Explore</a>
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("traveler-dashboard")}>My Trips</a>
             <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-dashboard")}>Guide Dashboard</a>
+            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("become-guide")}>Become a Guide</a>
           </nav>
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center bg-gray-100 rounded-full p-1">
               <button className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-white shadow text-gray-900">Traveler</button>
-              <button onClick={() => onNavigate("guide-dashboard")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Guide</button>
+              <button onClick={() => onNavigate("become-guide")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Guide</button>
             </div>
             <Avatar src="photo-1472099645785-5658abf4ff4e" size="sm" alt="Profile" />
           </div>
@@ -350,12 +365,15 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               <Search className="w-4 h-4" /> Search
             </Btn>
           </div>
-          <div className="mt-5 flex gap-4">
+          <div className="mt-5 flex flex-col sm:flex-row gap-4 justify-center">
             <Btn variant="secondary" onClick={() => onNavigate("packages")} className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30">
               Explore Packages
             </Btn>
             <Btn variant="secondary" onClick={() => onNavigate("custom-trip")} className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30">
               Create Custom Trip <ArrowRight className="w-4 h-4" />
+            </Btn>
+            <Btn variant="secondary" onClick={() => onNavigate("become-guide")} className="bg-[#0ea472] text-white border-[#0ea472] hover:bg-[#0d8f5f]">
+              Become a Guide <Award className="w-4 h-4" />
             </Btn>
           </div>
         </div>
@@ -873,7 +891,7 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               className="w-full accent-[#0ea472]"
             />
             <div className="flex justify-between text-xs text-gray-400">
-              <span>$50</span><span>$2,000+</span>
+              <span>₹500</span><span>₹20,000+</span>
             </div>
             <div className="flex gap-2 flex-wrap">
               {[150, 300, 500, 750, 1000].map(b => (
@@ -1019,7 +1037,7 @@ function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
         <div className="flex flex-col gap-1.5">
           <div className="flex justify-between text-sm"><span className="text-gray-500">Destination</span><span className="font-semibold text-gray-900">Kyoto, Japan</span></div>
           <div className="flex justify-between text-sm"><span className="text-gray-500">Dates</span><span className="font-semibold text-gray-900">Jul 14–16</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Budget</span><span className="font-semibold text-gray-900">$400</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-500">Budget</span><span className="font-semibold text-gray-900">₹4,000</span></div>
         </div>
       </div>
 
@@ -1160,7 +1178,7 @@ function OffersScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           </div>
           <div className="flex-1">
             <p className="text-sm font-semibold text-gray-900">Kyoto, Japan · Jul 14–16</p>
-            <p className="text-xs text-gray-500">Budget $300–450 · 2 travelers · Cultural & Historical</p>
+            <p className="text-xs text-gray-500">Budget ₹3,000–4,500 · 2 travelers · Cultural & Historical</p>
           </div>
           <Badge variant="green">{OFFERS.filter(o => !dismissed.includes(o.id)).length} offers</Badge>
         </div>
@@ -1287,7 +1305,7 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <div className="w-6 h-6 rounded-md bg-[#0ea472] flex items-center justify-center flex-shrink-0">
             <MapPin className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-xs text-gray-600 flex-1">Kyoto Cultural Tour · Jul 14–15 · <span className="font-semibold text-[#0ea472]">Offer: $340</span></span>
+          <span className="text-xs text-gray-600 flex-1">Kyoto Cultural Tour · Jul 14–15 · <span className="font-semibold text-[#0ea472]">Offer: ₹3,400</span></span>
           <Btn size="sm" onClick={() => onNavigate("request-submitted")}>Confirm Booking</Btn>
         </div>
       </div>
@@ -1369,7 +1387,7 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
 
           <div className="grid grid-cols-4 gap-2">
             {[
-              { label: "This Month", value: "$2,840", icon: DollarSign, color: "text-[#0ea472]" },
+              { label: "This Month", value: "₹28,400", icon: DollarSign, color: "text-[#0ea472]" },
               { label: "Trips Done", value: "312", icon: Award, color: "text-[#1a7fd4]" },
               { label: "Rating", value: "4.97", icon: Star, color: "text-amber-500" },
               { label: "Requests", value: "3", icon: Bell, color: "text-purple-500" },
@@ -1451,7 +1469,7 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
           </div>
           <div className="flex justify-between mt-2">
             <span className="text-xs text-gray-400">Jun 1</span>
-            <span className="text-xs font-bold text-[#0ea472]">$2,840 total</span>
+            <span className="text-xs font-bold text-[#0ea472]">₹28,400 total</span>
             <span className="text-xs text-gray-400">Jun 30</span>
           </div>
         </Card>
@@ -1624,9 +1642,9 @@ function CounterOfferModal({ request, onClose, onSend }: {
               className="w-full accent-[#0ea472]"
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>$100</span>
+              <span>₹1,000</span>
               <span className="text-[#0ea472] font-semibold">Their budget: {request.budget}</span>
-              <span>$800</span>
+              <span>₹8,000</span>
             </div>
           </div>
 
@@ -1645,6 +1663,288 @@ function CounterOfferModal({ request, onClose, onSend }: {
             <Send className="w-4 h-4" /> Send Offer · ${price}
           </Btn>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Screen: Become a Guide ───────────────────────────────────────────────────
+
+function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const [step, setStep] = useState(0);
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    yearsExperience: "1-3",
+    languages: [] as string[],
+    biography: "",
+    specializations: [] as string[],
+    pricePerDay: "",
+    availability: "",
+    serviceAreas: [] as string[],
+    agreeTerms: false,
+  });
+
+  const setField = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
+
+  const specialization_options = [
+    "Backwater Tours",
+    "Ayurveda Wellness",
+    "Kathakali Dance",
+    "Spice Plantations",
+    "Wildlife Safari",
+    "Tea Estate Tours",
+    "Beach & Water Sports",
+    "Local Cuisine",
+    "Photography",
+    "Trekking & Hiking",
+    "History & Culture",
+    "Houseboat Stays",
+  ];
+
+  const language_options = ["English", "Malayalam", "Hindi", "Tamil", "German", "French"];
+  const service_areas = ["Kochi", "Alleppey", "Munnar", "Thekkady", "Varkala", "Wayanad", "Kozhikode", "Kottayam"];
+
+  const WIZARD_STEPS = ["Your Profile", "Experience", "Specializations", "Languages", "Pricing & Availability", "Service Areas", "Documents", "Review & Submit"];
+
+  const toggleItem = (key: string, item: string) => {
+    const arr = form[key as keyof typeof form] as string[];
+    if (arr.includes(item)) {
+      setField(key, arr.filter(i => i !== item));
+    } else {
+      setField(key, [...arr, item]);
+    }
+  };
+
+  const stepContent = () => {
+    switch (step) {
+      case 0:
+        return (
+          <div className="flex flex-col gap-4">
+            <Input label="First Name" placeholder="e.g. Rajesh" icon={User} value={form.firstName} onChange={v => setField("firstName", v)} />
+            <Input label="Last Name" placeholder="e.g. Nair" value={form.lastName} onChange={v => setField("lastName", v)} />
+            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={v => setField("email", v)} />
+            <Input label="Phone Number" placeholder="+91 98765 43210" value={form.phone} onChange={v => setField("phone", v)} />
+          </div>
+        );
+      case 1:
+        return (
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Years of Experience</label>
+              <select value={form.yearsExperience} onChange={e => setField("yearsExperience", e.target.value)} className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472]">
+                <option value="1-3">1-3 years</option>
+                <option value="3-5">3-5 years</option>
+                <option value="5-10">5-10 years</option>
+                <option value="10+">10+ years</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Biography</label>
+              <textarea value={form.biography} onChange={e => setField("biography", e.target.value)} rows={4} placeholder="Tell travelers about yourself, your background, and what makes you a great guide..." className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] resize-none" />
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-semibold text-gray-700">Select your specializations</label>
+            <div className="grid grid-cols-2 gap-2">
+              {specialization_options.map(spec => (
+                <button key={spec} onClick={() => toggleItem("specializations", spec)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${form.specializations.includes(spec) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                  {spec}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 3:
+        return (
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-semibold text-gray-700">Select languages you speak</label>
+            <div className="grid grid-cols-2 gap-2">
+              {language_options.map(lang => (
+                <button key={lang} onClick={() => toggleItem("languages", lang)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${form.languages.includes(lang) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                  {lang}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 4:
+        return (
+          <div className="flex flex-col gap-4">
+            <Input label="Price per Day (₹)" placeholder="e.g. 2000" icon={DollarSign} value={form.pricePerDay} onChange={v => setField("pricePerDay", v)} />
+            <div>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Availability</label>
+              <textarea value={form.availability} onChange={e => setField("availability", e.target.value)} rows={3} placeholder="e.g. Available weekends, flexible on weekdays, best time June-September..." className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] resize-none" />
+            </div>
+          </div>
+        );
+      case 5:
+        return (
+          <div className="flex flex-col gap-3">
+            <label className="text-sm font-semibold text-gray-700">Select areas where you offer tours</label>
+            <div className="grid grid-cols-2 gap-2">
+              {service_areas.map(area => (
+                <button key={area} onClick={() => toggleItem("serviceAreas", area)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${form.serviceAreas.includes(area) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                  {area}
+                </button>
+              ))}
+            </div>
+          </div>
+        );
+      case 6:
+        return (
+          <div className="flex flex-col gap-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex gap-3">
+              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-blue-900">Document Verification Required</p>
+                <p className="text-xs text-blue-800 mt-1">For this prototype, we&apos;re simulating document upload. In production, you would upload ID verification and certifications here.</p>
+              </div>
+            </div>
+            <label className="flex items-center gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-[#0ea472] transition-all">
+              <input type="checkbox" className="w-5 h-5 accent-[#0ea472]" defaultChecked />
+              <span className="text-sm font-medium text-gray-700">I have verified ID and tourism certifications</span>
+            </label>
+          </div>
+        );
+      case 7:
+        return (
+          <div className="flex flex-col gap-4">
+            <div className="space-y-3">
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <p className="text-xs text-gray-500 mb-2">PROFILE SUMMARY</p>
+                <p className="text-lg font-bold text-gray-900">{form.firstName} {form.lastName}</p>
+                <p className="text-sm text-gray-600">{form.email} • {form.phone}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Experience</p>
+                  <p className="font-semibold text-gray-900">{form.yearsExperience}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-500">Price/Day</p>
+                  <p className="font-semibold text-gray-900">₹{form.pricePerDay}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg col-span-2">
+                  <p className="text-xs text-gray-500">Languages</p>
+                  <p className="font-semibold text-gray-900 text-sm">{form.languages.join(", ") || "None selected"}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg col-span-2">
+                  <p className="text-xs text-gray-500">Specializations</p>
+                  <p className="font-semibold text-gray-900 text-sm">{form.specializations.slice(0, 3).join(", ")} {form.specializations.length > 3 ? `+${form.specializations.length - 3} more` : ""}</p>
+                </div>
+              </div>
+            </div>
+            <label className="flex items-start gap-3 p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-[#0ea472] transition-all">
+              <input type="checkbox" className="w-5 h-5 accent-[#0ea472] mt-0.5" checked={form.agreeTerms} onChange={e => setField("agreeTerms", e.target.checked)} />
+              <span className="text-xs text-gray-700">I agree to the Terms of Service and understand that I may receive tour requests from travelers. My profile will be verified within 24-48 hours.</span>
+            </label>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      {/* Header */}
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => step === 0 ? onNavigate("landing") : setStep(s => s - 1)} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <span className="text-sm font-semibold text-gray-600">{step + 1} of {WIZARD_STEPS.length}</span>
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+        {/* Progress bar */}
+        <div className="h-1 bg-gray-100">
+          <div className="h-full bg-[#0ea472] transition-all duration-300" style={{ width: `${((step + 1) / WIZARD_STEPS.length) * 100}%` }} />
+        </div>
+      </div>
+
+      <div className="flex-1 max-w-lg mx-auto w-full px-4 py-8">
+        <div className="mb-8">
+          <Badge variant="green">{WIZARD_STEPS[step]}</Badge>
+          <h2 className="mt-3 text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+            {[
+              "Let&apos;s start with your basics",
+              "Tell us about your experience",
+              "What can you offer?",
+              "Languages you speak",
+              "Set your pricing & availability",
+              "Where do you operate?",
+              "Verify your credentials",
+              "Review your guide profile",
+            ][step]}
+          </h2>
+        </div>
+        {stepContent()}
+      </div>
+
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-4">
+        <div className="max-w-lg mx-auto">
+          {step < WIZARD_STEPS.length - 1 ? (
+            <Btn size="lg" className="w-full" onClick={() => setStep(s => s + 1)}>
+              Continue <ArrowRight className="w-4 h-4" />
+            </Btn>
+          ) : (
+            <Btn size="lg" className="w-full" onClick={() => form.agreeTerms ? onNavigate("guide-registration-success") : null} disabled={!form.agreeTerms}>
+              Become a Guide <Award className="w-4 h-4" />
+            </Btn>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Screen: Guide Registration Success ──────────────────────────────────────
+
+function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  return (
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
+      <div className="relative">
+        <div className="w-28 h-28 rounded-full bg-[#f0faf6] border-4 border-[#0ea472] flex items-center justify-center mx-auto mb-6">
+          <Award className="w-14 h-14 text-[#0ea472]" />
+        </div>
+      </div>
+      <h1 className="text-4xl font-bold text-gray-900 mt-4" style={{ fontFamily: "Fraunces, serif" }}>
+        Welcome to GuideGo!
+      </h1>
+      <p className="text-lg text-gray-600 mt-4 max-w-md leading-relaxed">
+        Your guide profile has been created and is under verification. We&apos;ll review your credentials within 24-48 hours.
+      </p>
+      <div className="mt-8 space-y-3 w-full max-w-sm">
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-start gap-3">
+          <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <div className="text-left">
+            <p className="text-sm font-semibold text-blue-900">Profile Under Review</p>
+            <p className="text-xs text-blue-800 mt-1">You&apos;ll receive an email when your profile is approved.</p>
+          </div>
+        </div>
+        <div className="p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3">
+          <Check className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+          <div className="text-left">
+            <p className="text-sm font-semibold text-green-900">You&apos;re Ready to Receive Requests</p>
+            <p className="text-xs text-green-800 mt-1">Once approved, travelers can book tours with you.</p>
+          </div>
+        </div>
+      </div>
+      <div className="mt-12 flex flex-col gap-3 w-full">
+        <Btn size="lg" className="w-full" onClick={() => onNavigate("landing")}>
+          Back to Home
+        </Btn>
+        <button onClick={() => onNavigate("guide-dashboard")} className="px-6 py-3 text-[#0ea472] font-semibold hover:bg-[#f0faf6] rounded-xl transition-colors">
+          View Guide Dashboard
+        </button>
       </div>
     </div>
   );
@@ -1670,6 +1970,8 @@ export default function App() {
       {screen === "chat" && <ChatScreen onNavigate={navigate} />}
       {screen === "guide-dashboard" && <GuideDashboardScreen onNavigate={navigate} />}
       {screen === "nearby-requests" && <NearbyRequestsScreen onNavigate={navigate} />}
+      {screen === "become-guide" && <BecomeGuideScreen onNavigate={navigate} />}
+      {screen === "guide-registration-success" && <GuideRegistrationSuccessScreen onNavigate={navigate} />}
     </div>
   );
 }
