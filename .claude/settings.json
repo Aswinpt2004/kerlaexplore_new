@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx playwright *)"
+      "Bash(npx playwright *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5173/)",
+      "Bash(node shot.js)"
     ]
   }
 }

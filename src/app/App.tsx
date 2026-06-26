@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "./components/ui/utils";
+import { findGuide, guideExists, registerGuide } from "./lib/guidesDb";
+import { findTraveler, travelerExists } from "./lib/travelersDb";
 import {
   Search, MapPin, Star, Clock, Globe, Shield, ChevronRight, ChevronLeft,
   ArrowRight, Users, Calendar, DollarSign, MessageCircle, Check, X,
@@ -18,12 +20,15 @@ type Screen =
   | "package-detail"
   | "custom-trip"
   | "request-submitted"
+  | "traveler-login"
   | "traveler-dashboard"
   | "offers"
   | "chat"
   | "guide-dashboard"
   | "nearby-requests"
   | "counter-offer"
+  | "guide-landing"
+  | "guide-login"
   | "become-guide"
   | "guide-registration-success"
   | "ai-trip-planner"
@@ -172,7 +177,7 @@ const GUIDES = [
     location: "Alleppey, Kerala", rating: 4.94, reviews: 218, experience: 7,
     languages: ["English", "Malayalam", "German"], price: 2000, duration: "Full Day",
     specialty: "Houseboat Cruises & Ayurveda", verified: true,
-    bio: "I grew up in the backwaters of Alleppey. Let me show you the serene beauty of Kerala's waterways — from houseboat experiences to authentic Ayurveda wellness centers.",
+    bio: "I grew up in the backwaters of Alleppey. Let me show you the serene beauty of Kerala's waterways, from houseboat experiences to authentic Ayurveda wellness centers.",
     tags: ["Backwaters", "Wellness", "Photography"],
     images: ["photo-1533587851505-d119e13fa0d7", "photo-1551634979-2b11f8c218da", "photo-1516483638261-f4dbaf036963"],
     itinerary: [
@@ -189,7 +194,7 @@ const GUIDES = [
     location: "Munnar, Kerala", rating: 4.91, reviews: 176, experience: 11,
     languages: ["English", "Malayalam", "Tamil"], price: 1600, duration: "Full Day",
     specialty: "Tea Plantations & Hill Station Trekking", verified: true,
-    bio: "A Munnar native storyteller — I navigate the tea gardens and mountains intimately, and know exactly where to find the best tea estates and hidden waterfall trails.",
+    bio: "A Munnar native storyteller, I navigate the tea gardens and mountains intimately, and know exactly where to find the best tea estates and hidden waterfall trails.",
     tags: ["Trekking", "Tea Estates", "Nature"],
     images: ["photo-1539020140153-e479b8e7b4cc", "photo-1548013146-72479768bada", "photo-1518548419970-58e3b4079ab2"],
     itinerary: [
@@ -232,17 +237,17 @@ const MY_REQUESTS = [
 ];
 
 const OFFERS = [
-  { id: 1, guide: GUIDES[0], price: 3400, originalBudget: "₹3,000–4,500", message: "Hello! I'd love to show you the hidden side of Kochi. My package includes a backwater houseboat ride, Chinese fishing net experience, and traditional Kerala lunch — all within your budget.", status: "pending" },
+  { id: 1, guide: GUIDES[0], price: 3400, originalBudget: "₹3,000–4,500", message: "Hello! I'd love to show you the hidden side of Kochi. My package includes a backwater houseboat ride, Chinese fishing net experience, and traditional Kerala lunch, all within your budget.", status: "pending" },
   { id: 2, guide: { ...GUIDES[1], name: "Suresh Kumar", avatar: "photo-1506794778202-cad84cf45f1d", location: "Alleppey, Kerala", rating: 4.88, reviews: 143, price: 2900, specialty: "Village Tours & Traditional Cuisine" }, price: 2900, originalBudget: "₹3,000–4,500", message: "Great budget for a Kochi experience! I specialize in authentic village tours and traditional Kerala backwater activities with local families.", status: "pending" },
   { id: 3, guide: { ...GUIDES[2], name: "Divya Sharma", avatar: "photo-1560250097-0b93528c311a", location: "Munnar, Kerala", rating: 4.82, reviews: 97, price: 4200, specialty: "Premium Tea & Waterfall Trek" }, price: 4200, originalBudget: "₹3,000–4,500", message: "I offer a premium tea plantation experience with private estate tours and guided treks to hidden waterfalls in the Western Ghats. Slightly above budget but worth every rupee!", status: "pending" },
 ];
 
 const CHAT_MESSAGES = [
-  { id: 1, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Hello Alex! I saw your request for a Kochi cultural tour. I'd love to design a custom itinerary around the hidden backwater villages — places most tourists never discover. 🌴", time: "10:32 AM" },
+  { id: 1, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Hello Alex! I saw your request for a Kochi cultural tour. I'd love to design a custom itinerary around the hidden backwater villages, places most tourists never discover. 🌴", time: "10:32 AM" },
   { id: 2, sender: "traveler", text: "Hi Rajesh! This looks amazing. Can we include the Chinese fishing nets experience early morning before the crowds?", time: "10:45 AM" },
-  { id: 3, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Absolutely — I always recommend starting at 6 AM. I know fishermen who let visitors experience the nets in action. We can see it at first light, just the two of you.", time: "10:47 AM" },
+  { id: 3, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Absolutely! I always recommend starting at 6 AM. I know fishermen who let visitors experience the nets in action. We can see it at first light, just the two of you.", time: "10:47 AM" },
   { id: 4, sender: "traveler", text: "Perfect. What about the Ayurveda massage? Is that included in the ₹3,400?", time: "11:02 AM" },
-  { id: 5, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Yes, fully included! We'll visit an authentic Ayurveda center in Fort Kochi — run by practitioners trained in traditional Kerala methods. It's genuinely rejuvenating. 🙏", time: "11:04 AM" },
+  { id: 5, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Yes, fully included! We'll visit an authentic Ayurveda center in Fort Kochi, run by practitioners trained in traditional Kerala methods. It's genuinely rejuvenating. 🙏", time: "11:04 AM" },
   { id: 6, sender: "traveler", text: "We're sold! Can you confirm July 14–15?", time: "11:15 AM" },
   { id: 7, sender: "guide", name: "Rajesh", avatar: "photo-1507003211169-0a1dd7228f2d", text: "Both days are wide open for you. Let me send the booking confirmation and detailed itinerary now. So excited to show you the beauty of Kochi! 🛶", time: "11:16 AM" },
 ];
@@ -334,13 +339,13 @@ function Card({ children, className = "", onClick }: { children: React.ReactNode
   );
 }
 
-function Input({ label, placeholder, icon: Icon, value, onChange, type = "text" }: {
+function Input({ label, placeholder, icon: Icon, value, onChange, type = "text", required = false }: {
   label?: string; placeholder?: string; icon?: React.ComponentType<{ className?: string }>;
-  value?: string; onChange?: (v: string) => void; type?: string;
+  value?: string; onChange?: (v: string) => void; type?: string; required?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      {label && <label className="text-sm font-semibold text-gray-700">{label}</label>}
+      {label && <label className="text-sm font-semibold text-gray-700">{label}{required && <span className="text-red-500 ml-1">*</span>}</label>}
       <div className="relative">
         {Icon && <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />}
         <input
@@ -355,13 +360,25 @@ function Input({ label, placeholder, icon: Icon, value, onChange, type = "text" 
   );
 }
 
-function BottomNav({ active, onNavigate }: { active: "home" | "explore" | "trips" | "profile"; onNavigate: (s: Screen) => void }) {
-  const items = [
+function BottomNav({ active, onNavigate, mode = "traveler" }: {
+  active: "home" | "explore" | "trips" | "profile" | "requests" | "packages" | "messages";
+  onNavigate: (s: Screen) => void;
+  mode?: "traveler" | "guide";
+}) {
+  const travelerItems = [
     { id: "home", icon: Home, label: "Home", screen: "landing" as Screen },
     { id: "explore", icon: Map, label: "Explore", screen: "destination" as Screen },
     { id: "trips", icon: Briefcase, label: "My Trips", screen: "traveler-dashboard" as Screen },
     { id: "profile", icon: User, label: "Profile", screen: "traveler-dashboard" as Screen },
   ];
+  const guideItems = [
+    { id: "home", icon: Home, label: "Home", screen: "guide-dashboard" as Screen },
+    { id: "requests", icon: Navigation, label: "Requests", screen: "nearby-requests" as Screen },
+    { id: "packages", icon: Package, label: "Packages", screen: "packages" as Screen },
+    { id: "messages", icon: MessageCircle, label: "Messages", screen: "chat" as Screen },
+    { id: "profile", icon: User, label: "Profile", screen: "guide-dashboard" as Screen },
+  ];
+  const items = mode === "guide" ? guideItems : travelerItems;
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50 md:hidden">
       <div className="flex items-center justify-around px-2 py-2">
@@ -413,6 +430,38 @@ function TopNav({ onNavigate, title, showBack, backScreen, mode = "traveler" }: 
   );
 }
 
+function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  return (
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
+      <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onNavigate("landing")}>
+          <div className="w-8 h-8 rounded-xl bg-[#0ea472] flex items-center justify-center">
+            <Navigation className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-[#0d1117] text-xl" style={{ fontFamily: "Fraunces, serif" }}>GuideGo</span>
+        </div>
+        <nav className="hidden md:flex items-center gap-6">
+          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("destination")}>Explore</a>
+          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium flex items-center gap-1" onClick={() => onNavigate("ai-trip-planner")}>
+            <Sparkles className="w-4 h-4 text-[#0ea472]" />
+            AI Planner
+          </a>
+          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("traveler-dashboard")}>My Trips</a>
+          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-dashboard")}>Guide Dashboard</a>
+          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-landing")}>Become a Guide</a>
+        </nav>
+        <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center bg-gray-100 rounded-full p-1">
+            <button className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-white shadow text-gray-900">Traveler</button>
+            <button onClick={() => onNavigate("guide-landing")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Guide</button>
+          </div>
+          <Avatar src="photo-1472099645785-5658abf4ff4e" size="sm" alt="Profile" />
+        </div>
+      </div>
+    </header>
+  );
+}
+
 // ─── Screen 1: Landing ─────────────────────────────────────────────────────────
 
 function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
@@ -420,34 +469,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-[#0ea472] flex items-center justify-center">
-              <Navigation className="w-4 h-4 text-white" />
-            </div>
-            <span className="font-bold text-[#0d1117] text-xl" style={{ fontFamily: "Fraunces, serif" }}>GuideGo</span>
-          </div>
-          <nav className="hidden md:flex items-center gap-6">
-            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("destination")}>Explore</a>
-            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium flex items-center gap-1" onClick={() => onNavigate("ai-trip-planner")}>
-              <Sparkles className="w-4 h-4 text-[#0ea472]" />
-              AI Planner
-            </a>
-            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("traveler-dashboard")}>My Trips</a>
-            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-dashboard")}>Guide Dashboard</a>
-            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("become-guide")}>Become a Guide</a>
-          </nav>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center bg-gray-100 rounded-full p-1">
-              <button className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-white shadow text-gray-900">Traveler</button>
-              <button onClick={() => onNavigate("become-guide")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Guide</button>
-            </div>
-            <Avatar src="photo-1472099645785-5658abf4ff4e" size="sm" alt="Profile" />
-          </div>
-        </div>
-      </header>
+      <SiteHeader onNavigate={onNavigate} />
 
       {/* Hero */}
       <section className="relative min-h-[640px] md:h-[680px]">
@@ -459,7 +481,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             Travel like you already live there.
           </h1>
           <p className="mt-4 text-lg text-white/80 max-w-xl font-light">
-            Book an expert local guide or post your custom trip — nearby guides will compete for your adventure.
+            Book an expert local guide or post your custom trip. Nearby guides will compete for your adventure.
           </p>
 
           {/* Search bar */}
@@ -489,7 +511,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             <Btn variant="secondary" onClick={() => onNavigate("ai-trip-planner")} className="bg-[#FFD700] text-gray-900 border-[#FFD700] hover:bg-[#FFC700] font-semibold">
               AI Trip Planner <Sparkles className="w-4 h-4" />
             </Btn>
-            <Btn variant="secondary" onClick={() => onNavigate("become-guide")} className="bg-[#0ea472] text-white border-[#0ea472] hover:bg-[#0d8f5f]">
+            <Btn variant="secondary" onClick={() => onNavigate("guide-landing")} className="bg-[#0ea472] text-white border-[#0ea472] hover:bg-[#0d8f5f]">
               Become a Guide <Award className="w-4 h-4" />
             </Btn>
           </div>
@@ -535,7 +557,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               Personalized Kerala Itineraries in Seconds
             </h2>
             <p className="text-lg mb-8 opacity-90">
-              Tell our AI your preferences, travel style, and budget. Get a custom-curated Kerala adventure matched with the perfect guides—all tailored to your unique travel goals.
+              Tell our AI your preferences, travel style, and budget. Get a custom-curated Kerala adventure matched with the perfect guides, all tailored to your unique travel goals.
             </p>
             <div className="grid grid-cols-3 gap-6 mb-8">
               <div>
@@ -724,7 +746,7 @@ function DestinationScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
             </div>
             <div className="text-center">
               <h3 className="text-lg font-bold text-gray-900 mb-2">Design your perfect trip</h3>
-              <p className="text-sm text-gray-500 max-w-xs">Tell us what you want — budget, dates, style. Nearby guides will send you offers.</p>
+              <p className="text-sm text-gray-500 max-w-xs">Tell us what you want: budget, dates, style. Nearby guides will send you offers.</p>
             </div>
             <Btn size="lg" onClick={() => onNavigate("custom-trip")}>Start Custom Trip Wizard <ArrowRight className="w-4 h-4" /></Btn>
           </div>
@@ -956,7 +978,7 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
     style: "Cultural & Historical",
     requirements: "Hidden temples, local food, no tourist traps",
     budget: 400,
-    notes: "Anniversary trip — would love a special surprise element",
+    notes: "Anniversary trip, would love a special surprise element",
   });
 
   const setField = (k: string, v: string | number) => setForm(f => ({ ...f, [k]: v }));
@@ -1151,7 +1173,10 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center relative">
+      <button onClick={() => onNavigate("landing")} className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <X className="w-5 h-5 text-gray-500" />
+      </button>
       <div className="relative">
         <div className="w-28 h-28 rounded-full bg-[#f0faf6] border-4 border-[#0ea472] flex items-center justify-center mx-auto">
           <Check className="w-12 h-12 text-[#0ea472]" />
@@ -1213,8 +1238,9 @@ function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => vo
 
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
+      <SiteHeader onNavigate={onNavigate} />
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4 pt-14 pb-6">
+        <div className="max-w-lg mx-auto px-4 pt-6 pb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Avatar src="photo-1472099645785-5658abf4ff4e" size="lg" alt="Alex" />
@@ -1627,22 +1653,7 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
         </Card>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100">
-        <div className="max-w-lg mx-auto flex items-center justify-around px-2 py-2">
-          {[
-            { icon: Home, label: "Home", screen: "guide-dashboard" as Screen },
-            { icon: Navigation, label: "Requests", screen: "nearby-requests" as Screen },
-            { icon: Package, label: "Packages", screen: "packages" as Screen },
-            { icon: MessageCircle, label: "Messages", screen: "chat" as Screen },
-            { icon: User, label: "Profile", screen: "guide-dashboard" as Screen },
-          ].map(item => (
-            <button key={item.label} onClick={() => onNavigate(item.screen)} className="flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl transition-all">
-              <item.icon className={`w-5 h-5 ${item.label === "Home" ? "text-[#0ea472]" : "text-gray-400"}`} />
-              <span className={`text-[10px] font-semibold ${item.label === "Home" ? "text-[#0ea472]" : "text-gray-400"}`}>{item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      <BottomNav active="home" onNavigate={onNavigate} mode="guide" />
     </div>
   );
 }
@@ -1744,6 +1755,7 @@ function NearbyRequestsScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
       {showCounterModal && selectedRequest && (
         <CounterOfferModal request={selectedRequest} onClose={() => setShowCounterModal(false)} onSend={() => { setShowCounterModal(false); onNavigate("guide-dashboard"); }} />
       )}
+      <BottomNav active="requests" onNavigate={onNavigate} mode="guide" />
     </div>
   );
 }
@@ -1822,20 +1834,163 @@ function CounterOfferModal({ request, onClose, onSend }: {
 
 // ─── Screen: Become a Guide ───────────────────────────────────────────────────
 
-function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function GuideLandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <span className="text-sm font-semibold text-gray-600">Guide Access</span>
+          <div className="w-9 h-9" />
+        </div>
+      </div>
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center max-w-lg mx-auto w-full">
+        <div className="w-16 h-16 rounded-full bg-[#f0faf6] border-2 border-[#0ea472] flex items-center justify-center mb-6">
+          <Award className="w-8 h-8 text-[#0ea472]" />
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+          Guide Access
+        </h1>
+        <p className="text-gray-600 mt-3 max-w-sm">
+          New to GuideGo? Register as a guide. Already registered? Log in to your dashboard.
+        </p>
+        <div className="mt-8 flex flex-col gap-3 w-full max-w-sm">
+          <Btn size="lg" className="w-full" onClick={() => onNavigate("become-guide")}>
+            Become a Guide <Award className="w-4 h-4" />
+          </Btn>
+          <Btn size="lg" variant="outline" className="w-full" onClick={() => onNavigate("guide-login")}>
+            Login to Dashboard
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GuideLoginScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Screen) => void; onAuthSuccess: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = () => {
+    const guide = findGuide(email, password);
+    if (guide) {
+      setError("");
+      onAuthSuccess();
+      onNavigate("guide-dashboard");
+    } else {
+      setError(
+        guideExists(email)
+          ? "Incorrect password. Please try again."
+          : "No guide account found with this email. Register first."
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => onNavigate("guide-landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <span className="text-sm font-semibold text-gray-600">Guide Login</span>
+          <div className="w-9 h-9" />
+        </div>
+      </div>
+      <div className="flex-1 flex flex-col px-6 pt-10 max-w-sm mx-auto w-full">
+        <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+          Welcome back
+        </h1>
+        <p className="text-gray-600 mt-2">Log in to manage your guide dashboard.</p>
+        <div className="mt-8 flex flex-col gap-4">
+          <Input label="Email" type="email" placeholder="your@email.com" value={email} onChange={setEmail} required />
+          <Input label="Password" type="password" placeholder="Enter your password" value={password} onChange={setPassword} required />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Btn size="lg" className="w-full mt-2" onClick={handleLogin} disabled={!email || !password}>
+            Login
+          </Btn>
+        </div>
+        <p className="text-sm text-gray-500 mt-6 text-center">
+          Not registered yet?{" "}
+          <button onClick={() => onNavigate("become-guide")} className="text-[#0ea472] font-semibold hover:underline">
+            Become a Guide
+          </button>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function TravelerLoginScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Screen) => void; onAuthSuccess: () => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = () => {
+    const traveler = findTraveler(email, password);
+    if (traveler) {
+      setError("");
+      onAuthSuccess();
+      onNavigate("traveler-dashboard");
+    } else {
+      setError(
+        travelerExists(email)
+          ? "Incorrect password. Please try again."
+          : "No account found with this email."
+      );
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
+          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+            <ChevronLeft className="w-5 h-5 text-gray-700" />
+          </button>
+          <span className="text-sm font-semibold text-gray-600">Traveler Login</span>
+          <div className="w-9 h-9" />
+        </div>
+      </div>
+      <div className="flex-1 flex flex-col px-6 pt-10 max-w-sm mx-auto w-full">
+        <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+          Welcome back
+        </h1>
+        <p className="text-gray-600 mt-2">Log in to view your trips and offers.</p>
+        <div className="mt-8 flex flex-col gap-4">
+          <Input label="Email" type="email" placeholder="your@email.com" value={email} onChange={setEmail} required />
+          <Input label="Password" type="password" placeholder="Enter your password" value={password} onChange={setPassword} required />
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <Btn size="lg" className="w-full mt-2" onClick={handleLogin} disabled={!email || !password}>
+            Login
+          </Btn>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BecomeGuideScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Screen) => void; onAuthSuccess: () => void }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
+    password: "",
     yearsExperience: "1-3",
     languages: [] as string[],
+    otherLanguage: "",
     biography: "",
     specializations: [] as string[],
+    otherSpecialization: "",
     pricePerDay: "",
     availability: "",
     serviceAreas: [] as string[],
+    otherServiceArea: "",
     agreeTerms: false,
   });
 
@@ -1854,12 +2009,25 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
     "Trekking & Hiking",
     "History & Culture",
     "Houseboat Stays",
+    "Others",
   ];
 
-  const language_options = ["English", "Malayalam", "Hindi", "Tamil", "German", "French"];
-  const service_areas = ["Kochi", "Alleppey", "Munnar", "Thekkady", "Varkala", "Wayanad", "Kozhikode", "Kottayam"];
+  const language_options = ["English", "Malayalam", "Hindi", "Tamil", "German", "French", "Other"];
+  const service_areas = ["Kochi", "Alleppey", "Munnar", "Thekkady", "Varkala", "Wayanad", "Kozhikode", "Kottayam", "Other"];
 
   const WIZARD_STEPS = ["Your Profile", "Experience", "Specializations", "Languages", "Pricing & Availability", "Service Areas", "Documents", "Review & Submit"];
+
+  const displaySpecializations = form.specializations.map(spec =>
+    spec === "Others" && form.otherSpecialization.trim() ? form.otherSpecialization.trim() : spec
+  );
+
+  const displayLanguages = form.languages.map((lang: string) =>
+    lang === "Other" && form.otherLanguage.trim() ? form.otherLanguage.trim() : lang
+  );
+
+  const displayServiceAreas = form.serviceAreas.map((area: string) =>
+    area === "Other" && form.otherServiceArea.trim() ? form.otherServiceArea.trim() : area
+  );
 
   const toggleItem = (key: string, item: string) => {
     const arr = form[key as keyof typeof form] as string[];
@@ -1875,18 +2043,20 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
       case 0:
         return (
           <div className="flex flex-col gap-4">
-            <Input label="First Name" placeholder="e.g. Rajesh" icon={User} value={form.firstName} onChange={v => setField("firstName", v)} />
-            <Input label="Last Name" placeholder="e.g. Nair" value={form.lastName} onChange={v => setField("lastName", v)} />
-            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={v => setField("email", v)} />
-            <Input label="Phone Number" placeholder="+91 98765 43210" value={form.phone} onChange={v => setField("phone", v)} />
+            <Input label="First Name" placeholder="e.g. Rajesh" icon={User} value={form.firstName} onChange={v => setField("firstName", v)} required />
+            <Input label="Last Name" placeholder="e.g. Jhon" value={form.lastName} onChange={v => setField("lastName", v)} required />
+            <Input label="Email" type="email" placeholder="your@email.com" value={form.email} onChange={v => setField("email", v)} required />
+            <Input label="Phone Number" placeholder="+91 98765 43210" value={form.phone} onChange={v => setField("phone", v)} required />
+            <Input label="Password" type="password" placeholder="Create a password" value={form.password} onChange={v => setField("password", v)} required />
           </div>
         );
       case 1:
         return (
           <div className="flex flex-col gap-4">
             <div>
-              <label className="text-sm font-semibold text-gray-700 block mb-3">Years of Experience</label>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Years of Experience<span className="text-red-500 ml-1">*</span></label>
               <select value={form.yearsExperience} onChange={e => setField("yearsExperience", e.target.value)} className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472]">
+                <option value="0-1">0-1 years</option>
                 <option value="1-3">1-3 years</option>
                 <option value="3-5">3-5 years</option>
                 <option value="5-10">5-10 years</option>
@@ -1894,7 +2064,7 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700 block mb-3">Biography</label>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Biography<span className="text-red-500 ml-1">*</span></label>
               <textarea value={form.biography} onChange={e => setField("biography", e.target.value)} rows={4} placeholder="Tell travelers about yourself, your background, and what makes you a great guide..." className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] resize-none" />
             </div>
           </div>
@@ -1902,35 +2072,65 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
       case 2:
         return (
           <div className="flex flex-col gap-3">
-            <label className="text-sm font-semibold text-gray-700">Select your specializations</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="text-sm font-semibold text-gray-700">Select your specializations<span className="text-red-500 ml-1">*</span></label>
+            <div className="flex flex-wrap gap-2">
               {specialization_options.map(spec => (
-                <button key={spec} onClick={() => toggleItem("specializations", spec)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${form.specializations.includes(spec) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                <button
+                  key={spec}
+                  onClick={() => toggleItem("specializations", spec)}
+                  className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                    form.specializations.includes(spec)
+                      ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
                   {spec}
                 </button>
               ))}
             </div>
+            {form.specializations.includes("Others") && (
+              <Input
+                placeholder="Enter your specialization"
+                value={form.otherSpecialization}
+                onChange={v => setField("otherSpecialization", v)}
+              />
+            )}
           </div>
         );
       case 3:
         return (
           <div className="flex flex-col gap-3">
-            <label className="text-sm font-semibold text-gray-700">Select languages you speak</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="text-sm font-semibold text-gray-700">Select languages you speak<span className="text-red-500 ml-1">*</span></label>
+            <div className="flex flex-wrap gap-2">
               {language_options.map(lang => (
-                <button key={lang} onClick={() => toggleItem("languages", lang)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${form.languages.includes(lang) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                <button
+                  key={lang}
+                  onClick={() => toggleItem("languages", lang)}
+                  className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                    form.languages.includes(lang)
+                      ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
                   {lang}
                 </button>
               ))}
             </div>
+            {form.languages.includes("Other") && (
+              <Input
+                placeholder="Enter language"
+                value={form.otherLanguage}
+                onChange={v => setField("otherLanguage", v)}
+              />
+            )}
           </div>
         );
       case 4:
         return (
           <div className="flex flex-col gap-4">
-            <Input label="Price per Day (₹)" placeholder="e.g. 2000" icon={DollarSign} value={form.pricePerDay} onChange={v => setField("pricePerDay", v)} />
+            <Input label="Price per Day (₹)" placeholder="e.g. 2000" icon={DollarSign} value={form.pricePerDay} onChange={v => setField("pricePerDay", v)} required />
             <div>
-              <label className="text-sm font-semibold text-gray-700 block mb-3">Availability</label>
+              <label className="text-sm font-semibold text-gray-700 block mb-3">Availability<span className="text-red-500 ml-1">*</span></label>
               <textarea value={form.availability} onChange={e => setField("availability", e.target.value)} rows={3} placeholder="e.g. Available weekends, flexible on weekdays, best time June-September..." className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] resize-none" />
             </div>
           </div>
@@ -1938,14 +2138,29 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
       case 5:
         return (
           <div className="flex flex-col gap-3">
-            <label className="text-sm font-semibold text-gray-700">Select areas where you offer tours</label>
-            <div className="grid grid-cols-2 gap-2">
+            <label className="text-sm font-semibold text-gray-700">Select areas where you offer tours<span className="text-red-500 ml-1">*</span></label>
+            <div className="flex flex-wrap gap-2">
               {service_areas.map(area => (
-                <button key={area} onClick={() => toggleItem("serviceAreas", area)} className={`p-3 rounded-lg border-2 text-left text-sm font-medium transition-all ${form.serviceAreas.includes(area) ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}>
+                <button
+                  key={area}
+                  onClick={() => toggleItem("serviceAreas", area)}
+                  className={`px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                    form.serviceAreas.includes(area)
+                      ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]"
+                      : "border-gray-200 text-gray-700 hover:border-gray-300"
+                  }`}
+                >
                   {area}
                 </button>
               ))}
             </div>
+            {form.serviceAreas.includes("Other") && (
+              <Input
+                placeholder="Enter service area"
+                value={form.otherServiceArea}
+                onChange={v => setField("otherServiceArea", v)}
+              />
+            )}
           </div>
         );
       case 6:
@@ -1984,11 +2199,15 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg col-span-2">
                   <p className="text-xs text-gray-500">Languages</p>
-                  <p className="font-semibold text-gray-900 text-sm">{form.languages.join(", ") || "None selected"}</p>
+                  <p className="font-semibold text-gray-900 text-sm">{displayLanguages.join(", ") || "None selected"}</p>
                 </div>
                 <div className="p-3 bg-gray-50 rounded-lg col-span-2">
                   <p className="text-xs text-gray-500">Specializations</p>
-                  <p className="font-semibold text-gray-900 text-sm">{form.specializations.slice(0, 3).join(", ")} {form.specializations.length > 3 ? `+${form.specializations.length - 3} more` : ""}</p>
+                  <p className="font-semibold text-gray-900 text-sm">{displaySpecializations.slice(0, 3).join(", ")} {displaySpecializations.length > 3 ? `+${displaySpecializations.length - 3} more` : ""}</p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-lg col-span-2">
+                  <p className="text-xs text-gray-500">Service Areas</p>
+                  <p className="font-semibold text-gray-900 text-sm">{displayServiceAreas.join(", ") || "None selected"}</p>
                 </div>
               </div>
             </div>
@@ -2048,7 +2267,23 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
               Continue <ArrowRight className="w-4 h-4" />
             </Btn>
           ) : (
-            <Btn size="lg" className="w-full" onClick={() => form.agreeTerms ? onNavigate("guide-registration-success") : null} disabled={!form.agreeTerms}>
+            <Btn
+              size="lg"
+              className="w-full"
+              onClick={() => {
+                if (!form.agreeTerms) return;
+                registerGuide({
+                  firstName: form.firstName,
+                  lastName: form.lastName,
+                  email: form.email,
+                  phone: form.phone,
+                  password: form.password,
+                });
+                onAuthSuccess();
+                onNavigate("guide-registration-success");
+              }}
+              disabled={!form.agreeTerms}
+            >
               Become a Guide <Award className="w-4 h-4" />
             </Btn>
           )}
@@ -2062,7 +2297,10 @@ function BecomeGuideScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
 
 function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center relative">
+      <button onClick={() => onNavigate("landing")} className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
+        <X className="w-5 h-5 text-gray-500" />
+      </button>
       <div className="relative">
         <div className="w-28 h-28 rounded-full bg-[#f0faf6] border-4 border-[#0ea472] flex items-center justify-center mx-auto mb-6">
           <Award className="w-14 h-14 text-[#0ea472]" />
@@ -2457,8 +2695,27 @@ function AIGeneratedItineraryScreen({ onNavigate, preferences }: { onNavigate: (
 export default function App() {
   const [screen, setScreen] = useState<Screen>("landing");
   const [screenData, setScreenData] = useState<any>(null);
+  const guideSessionRef = useRef(localStorage.getItem("guidego_guide_session") === "1");
+  const travelerSessionRef = useRef(localStorage.getItem("guidego_traveler_session") === "1");
+
+  const loginAsGuide = () => {
+    localStorage.setItem("guidego_guide_session", "1");
+    guideSessionRef.current = true;
+  };
+  const loginAsTraveler = () => {
+    localStorage.setItem("guidego_traveler_session", "1");
+    travelerSessionRef.current = true;
+  };
 
   const navigate = (s: Screen, data?: any) => {
+    if (s === "guide-dashboard" && !guideSessionRef.current) {
+      setScreen("guide-login");
+      return;
+    }
+    if (s === "traveler-dashboard" && !travelerSessionRef.current) {
+      setScreen("traveler-login");
+      return;
+    }
     setScreen(s);
     if (data) setScreenData(data);
   };
@@ -2471,12 +2728,15 @@ export default function App() {
       {screen === "package-detail" && <PackageDetailScreen onNavigate={navigate} />}
       {screen === "custom-trip" && <CustomTripScreen onNavigate={navigate} />}
       {screen === "request-submitted" && <RequestSubmittedScreen onNavigate={navigate} />}
+      {screen === "traveler-login" && <TravelerLoginScreen onNavigate={navigate} onAuthSuccess={loginAsTraveler} />}
       {screen === "traveler-dashboard" && <TravelerDashboardScreen onNavigate={navigate} />}
       {screen === "offers" && <OffersScreen onNavigate={navigate} />}
       {screen === "chat" && <ChatScreen onNavigate={navigate} />}
       {screen === "guide-dashboard" && <GuideDashboardScreen onNavigate={navigate} />}
       {screen === "nearby-requests" && <NearbyRequestsScreen onNavigate={navigate} />}
-      {screen === "become-guide" && <BecomeGuideScreen onNavigate={navigate} />}
+      {screen === "guide-landing" && <GuideLandingScreen onNavigate={navigate} />}
+      {screen === "guide-login" && <GuideLoginScreen onNavigate={navigate} onAuthSuccess={loginAsGuide} />}
+      {screen === "become-guide" && <BecomeGuideScreen onNavigate={navigate} onAuthSuccess={loginAsGuide} />}
       {screen === "guide-registration-success" && <GuideRegistrationSuccessScreen onNavigate={navigate} />}
       {screen === "ai-trip-planner" && <AITripPlannerScreen onNavigate={navigate} />}
       {screen === "ai-trip-chat" && <AITripChatScreen onNavigate={navigate} preferences={screenData} />}
