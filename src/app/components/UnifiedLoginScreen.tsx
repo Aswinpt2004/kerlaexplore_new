@@ -134,8 +134,8 @@ export default function UnifiedLoginScreen({ onNavigate }: UnifiedLoginScreenPro
           {role === "traveler" && (
             <p className="text-gray-600">
               Don&apos;t have an account?{" "}
-              <button onClick={() => onNavigate("landing")} className="text-[#0ea472] font-semibold hover:underline">
-                Browse as guest
+              <button onClick={() => onNavigate("traveler-signup")} className="text-[#0ea472] font-semibold hover:underline">
+                Sign up here
               </button>
             </p>
           )}

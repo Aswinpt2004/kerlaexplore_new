@@ -4,6 +4,7 @@ import { findGuide, guideExists, registerGuide } from "./lib/guidesDb";
 import { findTraveler, travelerExists } from "./lib/travelersDb";
 import { AuthProvider, useAuth, type UserRole } from "./context/AuthContext";
 import UnifiedLoginScreen from "./components/UnifiedLoginScreen";
+import TravelerSignUpScreen from "./components/TravelerSignUpScreen";
 import {
   Search, MapPin, Star, Clock, Globe, Shield, ChevronRight, ChevronLeft,
   ArrowRight, Users, Calendar, DollarSign, MessageCircle, Check, X,
@@ -23,6 +24,7 @@ type Screen =
   | "custom-trip"
   | "request-submitted"
   | "login"
+  | "traveler-signup"
   | "traveler-dashboard"
   | "offers"
   | "chat"
@@ -1006,7 +1008,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen) => void }
   );
 }
 
-// ─── Screen 5: Custom Trip Wizard ─────────────────────────────────────────────
+// ─── Screen 5: Custom Trip Wizard ────────────────────────────���────────────────
 
 const WIZARD_STEPS = ["Destination", "Dates", "Travelers", "Style", "Requirements", "Budget", "Notes", "Review"];
 
@@ -1016,6 +1018,7 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
     destination: "Kyoto, Japan",
     startDate: "2025-07-14",
     endDate: "2025-07-16",
+    flexibleDates: false,
     travelers: 2,
     style: "Cultural & Historical",
     requirements: "Hidden temples, local food, no tourist traps",
@@ -1049,8 +1052,28 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       case 1:
         return (
           <div className="flex flex-col gap-4">
-            <Input label="Start date" type="date" value={form.startDate} onChange={v => setField("startDate", v)} />
-            <Input label="End date" type="date" value={form.endDate} onChange={v => setField("endDate", v)} />
+            <div>
+              <button
+                onClick={() => setField("flexibleDates", !form.flexibleDates)}
+                className={`w-full p-4 rounded-xl border-2 text-left transition-all mb-4 ${form.flexibleDates ? "border-[#0ea472] bg-[#f0faf6]" : "border-gray-200 hover:border-gray-300"}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${form.flexibleDates ? "border-[#0ea472] bg-[#0ea472]" : "border-gray-300"}`}>
+                    {form.flexibleDates && <Check className="w-3 h-3 text-white" />}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">I'm flexible with dates</p>
+                    <p className="text-xs text-gray-500 mt-1">Guides can suggest the best time</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+            {!form.flexibleDates && (
+              <>
+                <Input label="Start date" type="date" value={form.startDate} onChange={v => setField("startDate", v)} />
+                <Input label="End date" type="date" value={form.endDate} onChange={v => setField("endDate", v)} />
+              </>
+            )}
           </div>
         );
       case 2:
@@ -1134,7 +1157,7 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <div className="flex flex-col gap-3">
             {[
               { label: "Destination", value: form.destination, icon: MapPin },
-              { label: "Dates", value: `${form.startDate} → ${form.endDate}`, icon: Calendar },
+              { label: "Dates", value: form.flexibleDates ? "Flexible (any time)" : `${form.startDate} → ${form.endDate}`, icon: Calendar },
               { label: "Travelers", value: `${form.travelers} ${form.travelers === 1 ? "person" : "people"}`, icon: Users },
               { label: "Travel Style", value: form.style, icon: Star },
               { label: "Budget", value: `$${form.budget}`, icon: DollarSign },
@@ -1272,7 +1295,7 @@ function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
   );
 }
 
-// ─── Screen 7: Traveler Dashboard ─────────────────────────────────────────────
+// ──�� Screen 7: Traveler Dashboard ─────────────────────────────────────────────
 
 function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { logout } = useAuth();
@@ -2676,6 +2699,8 @@ function AppContent() {
       "package-detail",
       "custom-trip",
       "request-submitted",
+      "login",
+      "traveler-signup",
       "guide-landing",
       "ai-trip-planner",
       "ai-trip-chat",
@@ -2726,6 +2751,7 @@ function AppContent() {
       {screen === "custom-trip" && <CustomTripScreen onNavigate={navigate} />}
       {screen === "request-submitted" && <RequestSubmittedScreen onNavigate={navigate} />}
       {screen === "login" && <UnifiedLoginScreen onNavigate={navigate} />}
+      {screen === "traveler-signup" && <TravelerSignUpScreen onNavigate={navigate} />}
       {screen === "traveler-dashboard" && <TravelerDashboardScreen onNavigate={navigate} />}
       {screen === "offers" && <OffersScreen onNavigate={navigate} />}
       {screen === "chat" && <ChatScreen onNavigate={navigate} />}

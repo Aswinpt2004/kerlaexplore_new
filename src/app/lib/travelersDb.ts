@@ -33,3 +33,17 @@ export function travelerExists(email: string): boolean {
   const normalizedEmail = email.trim().toLowerCase();
   return readDb().some(t => t.email.toLowerCase() === normalizedEmail);
 }
+
+export function registerTraveler(traveler: TravelerAccount): TravelerAccount {
+  const db = readDb();
+  const newTraveler: TravelerAccount = {
+    firstName: traveler.firstName.trim(),
+    lastName: traveler.lastName.trim(),
+    email: traveler.email.trim().toLowerCase(),
+    phone: traveler.phone.trim(),
+    password: traveler.password,
+  };
+  db.push(newTraveler);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  return newTraveler;
+}
