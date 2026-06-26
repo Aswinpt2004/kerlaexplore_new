@@ -1,7 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn } from "./components/ui/utils";
 import { findGuide, guideExists, registerGuide } from "./lib/guidesDb";
 import { findTraveler, travelerExists } from "./lib/travelersDb";
+import { AuthProvider, useAuth, type UserRole } from "./context/AuthContext";
+import UnifiedLoginScreen from "./components/UnifiedLoginScreen";
 import {
   Search, MapPin, Star, Clock, Globe, Shield, ChevronRight, ChevronLeft,
   ArrowRight, Users, Calendar, DollarSign, MessageCircle, Check, X,
@@ -20,7 +22,7 @@ type Screen =
   | "package-detail"
   | "custom-trip"
   | "request-submitted"
-  | "traveler-login"
+  | "login"
   | "traveler-dashboard"
   | "offers"
   | "chat"
@@ -28,7 +30,6 @@ type Screen =
   | "nearby-requests"
   | "counter-offer"
   | "guide-landing"
-  | "guide-login"
   | "become-guide"
   | "guide-registration-success"
   | "ai-trip-planner"
@@ -431,6 +432,9 @@ function TopNav({ onNavigate, title, showBack, backScreen, mode = "traveler" }: 
 }
 
 function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { user, logout } = useAuth();
+  const [showMenu, setShowMenu] = useState(false);
+
   return (
     <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-gray-100">
       <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -446,16 +450,54 @@ function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             <Sparkles className="w-4 h-4 text-[#0ea472]" />
             AI Planner
           </a>
-          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("traveler-dashboard")}>My Trips</a>
-          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-dashboard")}>Guide Dashboard</a>
-          <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-landing")}>Become a Guide</a>
+          {user?.role !== "guide" && (
+            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("traveler-dashboard")}>My Trips</a>
+          )}
+          {user?.role !== "traveler" && (
+            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-dashboard")}>Guide Dashboard</a>
+          )}
+          {!user && (
+            <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("guide-landing")}>Become a Guide</a>
+          )}
         </nav>
-        <div className="flex items-center gap-3">
-          <div className="hidden md:flex items-center bg-gray-100 rounded-full p-1">
-            <button className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-white shadow text-gray-900">Traveler</button>
-            <button onClick={() => onNavigate("guide-landing")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Guide</button>
-          </div>
-          <Avatar src="photo-1472099645785-5658abf4ff4e" size="sm" alt="Profile" />
+        <div className="flex items-center gap-3 relative">
+          {user ? (
+            <div className="hidden md:flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
+                {user.role === "guide" ? "Guide" : "Traveler"}
+              </div>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center relative"
+              >
+                <Avatar src="photo-1472099645785-5658abf4ff4e" size="sm" alt="Profile" />
+              </button>
+              {showMenu && (
+                <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-100 py-2 w-48 z-50">
+                  <div className="px-4 py-2 border-b border-gray-100">
+                    <p className="text-xs text-gray-500">Logged in as</p>
+                    <p className="text-sm font-semibold text-gray-900">{user.email}</p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowMenu(false);
+                      onNavigate("landing");
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center bg-gray-100 rounded-full p-1">
+              <button onClick={() => onNavigate("login")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-white shadow text-gray-900">Login</button>
+              <button onClick={() => onNavigate("guide-landing")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Become Guide</button>
+            </div>
+          )}
         </div>
       </div>
     </header>
@@ -1233,6 +1275,8 @@ function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
 // ─── Screen 7: Traveler Dashboard ─────────────────────────────────────────────
 
 function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { logout } = useAuth();
+  const [showSettings, setShowSettings] = useState(false);
   const statusColors = { offers_received: "green", pending: "amber" } as const;
   const statusLabels = { offers_received: "Offers Received", pending: "Awaiting Offers" };
 
@@ -1249,8 +1293,26 @@ function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => vo
                 <h2 className="text-xl font-bold text-gray-900">Alex M.</h2>
               </div>
             </div>
-            <button className="w-9 h-9 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50">
+            <button 
+              onClick={() => setShowSettings(!showSettings)}
+              className="w-9 h-9 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 relative"
+            >
               <Settings className="w-4 h-4 text-gray-500" />
+              {showSettings && (
+                <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-100 py-2 w-40 z-50">
+                  <button
+                    onClick={() => {
+                      logout();
+                      setShowSettings(false);
+                      onNavigate("landing");
+                    }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              )}
             </button>
           </div>
           <div className="grid grid-cols-3 gap-3 mt-5">
@@ -1531,6 +1593,8 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 // ─── Screen 10: Guide Dashboard ───────────────────────────────────────────────
 
 function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { logout } = useAuth();
+  
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       <div className="bg-white border-b border-gray-100">
@@ -1541,8 +1605,14 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
               <button onClick={() => onNavigate("landing")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Traveler</button>
               <button className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-[#0ea472] text-white shadow">Guide</button>
             </div>
-            <button onClick={() => onNavigate("landing")} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors">
-              <LogOut className="w-3.5 h-3.5" /> Switch to Traveler
+            <button 
+              onClick={() => {
+                logout();
+                onNavigate("login");
+              }} 
+              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" /> Logout
             </button>
           </div>
           <div className="flex items-center justify-between mb-5">
@@ -1869,111 +1939,8 @@ function GuideLandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void })
   );
 }
 
-function GuideLoginScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Screen) => void; onAuthSuccess: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = () => {
-    const guide = findGuide(email, password);
-    if (guide) {
-      setError("");
-      onAuthSuccess();
-      onNavigate("guide-dashboard");
-    } else {
-      setError(
-        guideExists(email)
-          ? "Incorrect password. Please try again."
-          : "No guide account found with this email. Register first."
-      );
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <button onClick={() => onNavigate("guide-landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-            <ChevronLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <span className="text-sm font-semibold text-gray-600">Guide Login</span>
-          <div className="w-9 h-9" />
-        </div>
-      </div>
-      <div className="flex-1 flex flex-col px-6 pt-10 max-w-sm mx-auto w-full">
-        <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
-          Welcome back
-        </h1>
-        <p className="text-gray-600 mt-2">Log in to manage your guide dashboard.</p>
-        <div className="mt-8 flex flex-col gap-4">
-          <Input label="Email" type="email" placeholder="your@email.com" value={email} onChange={setEmail} required />
-          <Input label="Password" type="password" placeholder="Enter your password" value={password} onChange={setPassword} required />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Btn size="lg" className="w-full mt-2" onClick={handleLogin} disabled={!email || !password}>
-            Login
-          </Btn>
-        </div>
-        <p className="text-sm text-gray-500 mt-6 text-center">
-          Not registered yet?{" "}
-          <button onClick={() => onNavigate("become-guide")} className="text-[#0ea472] font-semibold hover:underline">
-            Become a Guide
-          </button>
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function TravelerLoginScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Screen) => void; onAuthSuccess: () => void }) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = () => {
-    const traveler = findTraveler(email, password);
-    if (traveler) {
-      setError("");
-      onAuthSuccess();
-      onNavigate("traveler-dashboard");
-    } else {
-      setError(
-        travelerExists(email)
-          ? "Incorrect password. Please try again."
-          : "No account found with this email."
-      );
-    }
-  };
-
-  return (
-    <div className="min-h-screen bg-white flex flex-col">
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <button onClick={() => onNavigate("landing")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
-            <ChevronLeft className="w-5 h-5 text-gray-700" />
-          </button>
-          <span className="text-sm font-semibold text-gray-600">Traveler Login</span>
-          <div className="w-9 h-9" />
-        </div>
-      </div>
-      <div className="flex-1 flex flex-col px-6 pt-10 max-w-sm mx-auto w-full">
-        <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
-          Welcome back
-        </h1>
-        <p className="text-gray-600 mt-2">Log in to view your trips and offers.</p>
-        <div className="mt-8 flex flex-col gap-4">
-          <Input label="Email" type="email" placeholder="your@email.com" value={email} onChange={setEmail} required />
-          <Input label="Password" type="password" placeholder="Enter your password" value={password} onChange={setPassword} required />
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          <Btn size="lg" className="w-full mt-2" onClick={handleLogin} disabled={!email || !password}>
-            Login
-          </Btn>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function BecomeGuideScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Screen) => void; onAuthSuccess: () => void }) {
+  const { login } = useAuth();
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     firstName: "",
@@ -2279,6 +2246,8 @@ function BecomeGuideScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Scre
                   phone: form.phone,
                   password: form.password,
                 });
+                // Auto-login after registration
+                login(form.email, form.password, "guide");
                 onAuthSuccess();
                 onNavigate("guide-registration-success");
               }}
@@ -2293,7 +2262,7 @@ function BecomeGuideScreen({ onNavigate, onAuthSuccess }: { onNavigate: (s: Scre
   );
 }
 
-// ─── Screen: Guide Registration Success ──────────────────────────────────────
+// ─── Screen: Guide Registration Success ─────────────────────────────────────���
 
 function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   return (
@@ -2692,32 +2661,60 @@ function AIGeneratedItineraryScreen({ onNavigate, preferences }: { onNavigate: (
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
-export default function App() {
+function AppContent() {
+  const { user, logout } = useAuth();
   const [screen, setScreen] = useState<Screen>("landing");
   const [screenData, setScreenData] = useState<any>(null);
-  const guideSessionRef = useRef(localStorage.getItem("guidego_guide_session") === "1");
-  const travelerSessionRef = useRef(localStorage.getItem("guidego_traveler_session") === "1");
 
-  const loginAsGuide = () => {
-    localStorage.setItem("guidego_guide_session", "1");
-    guideSessionRef.current = true;
-  };
-  const loginAsTraveler = () => {
-    localStorage.setItem("guidego_traveler_session", "1");
-    travelerSessionRef.current = true;
-  };
-
+  // Protected route handler
   const navigate = (s: Screen, data?: any) => {
-    if (s === "guide-dashboard" && !guideSessionRef.current) {
-      setScreen("guide-login");
-      return;
+    // Public routes - no auth required
+    const publicRoutes: Screen[] = [
+      "landing",
+      "destination",
+      "packages",
+      "package-detail",
+      "custom-trip",
+      "request-submitted",
+      "guide-landing",
+      "ai-trip-planner",
+      "ai-trip-chat",
+      "ai-generated-itinerary",
+      "become-guide",
+      "guide-registration-success"
+    ];
+
+    // Protected traveler routes
+    const travelerRoutes: Screen[] = ["traveler-dashboard", "offers", "chat"];
+
+    // Protected guide routes
+    const guideRoutes: Screen[] = [
+      "guide-dashboard",
+      "nearby-requests",
+      "counter-offer"
+    ];
+
+    // Check if route requires authentication
+    if (travelerRoutes.includes(s)) {
+      if (!user || user.role !== "traveler") {
+        setScreen("login");
+        return;
+      }
+    } else if (guideRoutes.includes(s)) {
+      if (!user || user.role !== "guide") {
+        setScreen("login");
+        return;
+      }
     }
-    if (s === "traveler-dashboard" && !travelerSessionRef.current) {
-      setScreen("traveler-login");
-      return;
-    }
+
     setScreen(s);
     if (data) setScreenData(data);
+  };
+
+  // Add logout handler to navigate function
+  const handleLogout = () => {
+    logout();
+    setScreen("landing");
   };
 
   return (
@@ -2728,19 +2725,26 @@ export default function App() {
       {screen === "package-detail" && <PackageDetailScreen onNavigate={navigate} />}
       {screen === "custom-trip" && <CustomTripScreen onNavigate={navigate} />}
       {screen === "request-submitted" && <RequestSubmittedScreen onNavigate={navigate} />}
-      {screen === "traveler-login" && <TravelerLoginScreen onNavigate={navigate} onAuthSuccess={loginAsTraveler} />}
+      {screen === "login" && <UnifiedLoginScreen onNavigate={navigate} />}
       {screen === "traveler-dashboard" && <TravelerDashboardScreen onNavigate={navigate} />}
       {screen === "offers" && <OffersScreen onNavigate={navigate} />}
       {screen === "chat" && <ChatScreen onNavigate={navigate} />}
       {screen === "guide-dashboard" && <GuideDashboardScreen onNavigate={navigate} />}
       {screen === "nearby-requests" && <NearbyRequestsScreen onNavigate={navigate} />}
       {screen === "guide-landing" && <GuideLandingScreen onNavigate={navigate} />}
-      {screen === "guide-login" && <GuideLoginScreen onNavigate={navigate} onAuthSuccess={loginAsGuide} />}
-      {screen === "become-guide" && <BecomeGuideScreen onNavigate={navigate} onAuthSuccess={loginAsGuide} />}
+      {screen === "become-guide" && <BecomeGuideScreen onNavigate={navigate} onAuthSuccess={() => navigate("guide-dashboard")} />}
       {screen === "guide-registration-success" && <GuideRegistrationSuccessScreen onNavigate={navigate} />}
       {screen === "ai-trip-planner" && <AITripPlannerScreen onNavigate={navigate} />}
       {screen === "ai-trip-chat" && <AITripChatScreen onNavigate={navigate} preferences={screenData} />}
       {screen === "ai-generated-itinerary" && <AIGeneratedItineraryScreen onNavigate={navigate} preferences={screenData} />}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
