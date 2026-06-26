@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cn } from "./components/ui/utils";
 import {
   Search, MapPin, Star, Clock, Globe, Shield, ChevronRight, ChevronLeft,
   ArrowRight, Users, Calendar, DollarSign, MessageCircle, Check, X,
@@ -315,7 +316,7 @@ function Btn({
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${base} ${sizes[size]} ${variants[variant]} ${disabled ? "opacity-50 cursor-not-allowed" : ""} ${className}`}
+      className={cn(base, sizes[size], variants[variant], disabled && "opacity-50 cursor-not-allowed", className)}
     >
       {children}
     </button>
@@ -326,7 +327,7 @@ function Card({ children, className = "", onClick }: { children: React.ReactNode
   return (
     <div
       onClick={onClick}
-      className={`bg-white rounded-2xl border border-black/[0.07] shadow-sm ${onClick ? "cursor-pointer hover:shadow-md transition-shadow duration-200" : ""} ${className}`}
+      className={cn("bg-white rounded-2xl border border-black/[0.07] shadow-sm", onClick && "cursor-pointer hover:shadow-md transition-shadow duration-200", className)}
     >
       {children}
     </div>
@@ -449,10 +450,10 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       </header>
 
       {/* Hero */}
-      <section className="relative h-[580px] md:h-[680px] overflow-hidden">
+      <section className="relative min-h-[640px] md:h-[680px]">
         <UnsplashImg id="photo-1506905925346-21bda4d32df4" w={1600} h={900} alt="Mountain landscape" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
-        <div className="relative h-full flex flex-col items-center justify-center px-6 text-center">
+        <div className="relative h-full flex flex-col items-center justify-center px-6 py-10 text-center">
           <Badge variant="green">✦ 2,400+ Verified Local Guides</Badge>
           <h1 className="mt-5 text-4xl md:text-6xl font-bold text-white leading-tight max-w-3xl" style={{ fontFamily: "Fraunces, serif" }}>
             Travel like you already live there.
