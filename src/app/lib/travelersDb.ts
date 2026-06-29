@@ -26,7 +26,8 @@ function readDb(): TravelerAccount[] {
 
 export function findTraveler(email: string, password: string): TravelerAccount | undefined {
   const normalizedEmail = email.trim().toLowerCase();
-  return readDb().find(t => t.email.toLowerCase() === normalizedEmail && t.password === password);
+  const normalizedPassword = password.trim();
+  return readDb().find(t => t.email.toLowerCase() === normalizedEmail && t.password === normalizedPassword);
 }
 
 export function travelerExists(email: string): boolean {
