@@ -46,6 +46,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     role: UserRole
   ): Promise<{ success: boolean; error?: string }> => {
+    // Validate inputs
+    if (!email || !password) {
+      return { success: false, error: "Wrong credentials" };
+    }
+
     if (!role) {
       return { success: false, error: "Please select a role" };
     }
@@ -58,10 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
         return { success: true };
       } else {
-        const errorMsg = guideExists(email)
-          ? "Incorrect password. Please try again."
-          : "No guide account found with this email. Register first.";
-        return { success: false, error: errorMsg };
+        // Show "Wrong credentials" if data doesn't exist in db
+        return { success: false, error: "Wrong credentials" };
       }
     } else if (role === "traveler") {
       const traveler = findTraveler(email, password);
@@ -71,14 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
         return { success: true };
       } else {
-        const errorMsg = travelerExists(email)
-          ? "Incorrect password. Please try again."
-          : "No account found with this email.";
-        return { success: false, error: errorMsg };
+        // Show "Wrong credentials" if data doesn't exist in db
+        return { success: false, error: "Wrong credentials" };
       }
     }
 
-    return { success: false, error: "Invalid role" };
+    return { success: false, error: "Wrong credentials" };
   };
 
   const logout = () => {
