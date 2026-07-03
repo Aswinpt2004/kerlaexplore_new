@@ -1,4 +1,4 @@
-# KeraLaExplore - Architecture & Authentication Analysis
+# KuTo - Architecture & Authentication Analysis
 
 ## Current Architecture Issues
 
@@ -14,8 +14,8 @@
 ### Problem 2: POOR ACCESS CONTROL LOGIC
 - **Current State Management**:
   ```
-  guideSessionRef = localStorage.getItem("guidego_guide_session") === "1"
-  travelerSessionRef = localStorage.getItem("guidego_traveler_session") === "1"
+  guideSessionRef = localStorage.getItem("kuto_guide_session") === "1"
+  travelerSessionRef = localStorage.getItem("kuto_traveler_session") === "1"
   ```
 - **Issue**: All auth is client-side localStorage, no session persistence validation
 - **Navigation Guard** (lines 2711-2718):

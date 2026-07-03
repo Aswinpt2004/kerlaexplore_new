@@ -128,7 +128,7 @@ export default function TravelerSignUpScreen({ onNavigate }: TravelerSignUpScree
     },
     {
       title: "Create your password",
-      subtitle: "Secure your GuideGo account",
+      subtitle: "Secure your KuTo account",
     },
   ];
 

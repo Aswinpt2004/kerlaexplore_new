@@ -8,7 +8,7 @@ export type TravelerAccount = {
   password: string;
 };
 
-const STORAGE_KEY = "guidego_travelers_db";
+const STORAGE_KEY = "kuto_travelers_db";
 
 function readDb(): TravelerAccount[] {
   const raw = localStorage.getItem(STORAGE_KEY);

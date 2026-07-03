@@ -8,7 +8,7 @@ export type GuideAccount = {
   password: string;
 };
 
-const STORAGE_KEY = "guidego_guides_db";
+const STORAGE_KEY = "kuto_guides_db";
 
 function readDb(): GuideAccount[] {
   const raw = localStorage.getItem(STORAGE_KEY);

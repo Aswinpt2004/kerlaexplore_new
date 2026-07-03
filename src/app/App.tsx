@@ -412,7 +412,7 @@ function TopNav({ onNavigate, title, showBack, backScreen, mode = "traveler" }: 
             <div className="w-7 h-7 rounded-lg bg-[#0ea472] flex items-center justify-center">
               <Navigation className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-[#0d1117] text-base" style={{ fontFamily: "Fraunces, serif" }}>GuideGo</span>
+            <span className="font-bold text-[#0d1117] text-base" style={{ fontFamily: "Fraunces, serif" }}>KuTo</span>
           </div>
         )}
         {title && <h1 className="text-base font-semibold text-gray-900">{title}</h1>}
@@ -444,7 +444,7 @@ function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <div className="w-8 h-8 rounded-xl bg-[#0ea472] flex items-center justify-center">
             <Navigation className="w-4 h-4 text-white" />
           </div>
-          <span className="font-bold text-[#0d1117] text-xl" style={{ fontFamily: "Fraunces, serif" }}>GuideGo</span>
+          <span className="font-bold text-[#0d1117] text-xl" style={{ fontFamily: "Fraunces, serif" }}>KuTo</span>
         </div>
         <nav className="hidden md:flex items-center gap-6">
           <a className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer font-medium" onClick={() => onNavigate("destination")}>Explore</a>
@@ -668,7 +668,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       <section className="max-w-6xl mx-auto px-6 py-16">
         <div className="text-center mb-12">
           <p className="text-[#0ea472] text-sm font-semibold mb-1">Simple process</p>
-          <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>How GuideGo works</h2>
+          <h2 className="text-3xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>How KuTo works</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
@@ -1947,7 +1947,7 @@ function GuideLandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void })
           Guide Access
         </h1>
         <p className="text-gray-600 mt-3 max-w-sm">
-          New to GuideGo? Register as a guide. Already registered? Log in to your dashboard.
+          New to KuTo? Register as a guide. Already registered? Log in to your dashboard.
         </p>
         <div className="mt-8 flex flex-col gap-3 w-full max-w-sm">
           <Btn size="lg" className="w-full" onClick={() => onNavigate("become-guide")}>
@@ -2299,7 +2299,7 @@ function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen
         </div>
       </div>
       <h1 className="text-4xl font-bold text-gray-900 mt-4" style={{ fontFamily: "Fraunces, serif" }}>
-        Welcome to GuideGo!
+        Welcome to KuTo!
       </h1>
       <p className="text-lg text-gray-600 mt-4 max-w-md leading-relaxed">
         Your guide profile has been created and is under verification. We&apos;ll review your credentials within 24-48 hours.
