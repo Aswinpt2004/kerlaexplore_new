@@ -30,7 +30,8 @@ function writeDb(guides: GuideAccount[]) {
 
 export function findGuide(email: string, password: string): GuideAccount | undefined {
   const normalizedEmail = email.trim().toLowerCase();
-  return readDb().find(g => g.email.toLowerCase() === normalizedEmail && g.password === password);
+  const normalizedPassword = password.trim();
+  return readDb().find(g => g.email.toLowerCase() === normalizedEmail && g.password === normalizedPassword);
 }
 
 export function guideExists(email: string): boolean {
@@ -38,6 +39,14 @@ export function guideExists(email: string): boolean {
   return readDb().some(g => g.email.toLowerCase() === normalizedEmail);
 }
 
-export function registerGuide(guide: GuideAccount) {
-  writeDb([...readDb(), guide]);
+export function registerGuide(guide: GuideAccount): GuideAccount {
+  const normalizedGuide: GuideAccount = {
+    firstName: guide.firstName.trim(),
+    lastName: guide.lastName.trim(),
+    email: guide.email.trim().toLowerCase(),
+    phone: guide.phone.trim(),
+    password: guide.password.trim(),
+  };
+  writeDb([...readDb(), normalizedGuide]);
+  return normalizedGuide;
 }
