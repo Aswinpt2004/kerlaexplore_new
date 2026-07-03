@@ -655,7 +655,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
                       <StarRating rating={g.rating} />
                       <span className="text-xs text-gray-500 ml-1">{g.rating} ({g.reviews})</span>
                     </div>
-                    <span className="text-sm font-bold text-gray-900">${g.price}<span className="text-gray-400 font-normal text-xs">/day</span></span>
+                    <span className="text-sm font-bold text-gray-900">₹{g.price}<span className="text-gray-400 font-normal text-xs">/day</span></span>
                   </div>
                 </div>
               </Card>
@@ -718,14 +718,14 @@ function DestinationScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
   return (
     <div className="min-h-screen bg-white">
       <div className="relative h-64">
-        <UnsplashImg id="photo-1545569341-9eb8b30979d9" w={800} h={400} alt="Kyoto" className="w-full h-full object-cover" />
+        <UnsplashImg id="photo-1506905925346-21bda4d32df4" w={800} h={400} alt="Kochi" className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
         <button onClick={() => onNavigate("landing")} className="absolute top-12 left-4 w-9 h-9 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/30">
           <ChevronLeft className="w-5 h-5 text-white" />
         </button>
         <div className="absolute bottom-0 left-0 right-0 p-6">
-          <p className="text-white/70 text-sm">Japan</p>
-          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "Fraunces, serif" }}>Kyoto</h1>
+          <p className="text-white/70 text-sm">India</p>
+          <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "Fraunces, serif" }}>Kochi</h1>
           <div className="flex items-center gap-3 mt-2">
             <Badge variant="green">48 Guides</Badge>
             <span className="text-white/70 text-xs flex items-center gap-1"><Star className="w-3 h-3 fill-amber-400 text-amber-400" /> 4.9 avg rating</span>
@@ -776,7 +776,7 @@ function DestinationScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
                     <span className="text-xs text-gray-500 flex items-center gap-1"><Clock className="w-3 h-3" />{g.duration}</span>
                   </div>
                   <div className="flex items-center justify-between mt-3">
-                    <span className="text-base font-bold text-gray-900">${g.price}<span className="text-xs text-gray-400 font-normal">/person</span></span>
+                    <span className="text-base font-bold text-gray-900">₹{g.price}<span className="text-xs text-gray-400 font-normal">/person</span></span>
                     <Btn size="sm" onClick={() => onNavigate("package-detail")}>View</Btn>
                   </div>
                 </div>
@@ -809,7 +809,7 @@ function PackagesScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       <TopNav onNavigate={onNavigate} title="Guide Packages" showBack backScreen="destination" />
       <div className="max-w-lg mx-auto px-4 py-6 pb-24">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-500">{GUIDES.length} guides in Kyoto</p>
+          <p className="text-sm text-gray-500">{GUIDES.length} guides in Kochi</p>
           <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600">
             <Filter className="w-3.5 h-3.5" /> Filters
           </button>
@@ -841,7 +841,7 @@ function PackagesScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
                     <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><MapPin className="w-3 h-3" />{g.location}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-bold text-gray-900">${g.price}</p>
+                    <p className="text-lg font-bold text-gray-900">₹{g.price}</p>
                     <p className="text-xs text-gray-400">per person</p>
                   </div>
                 </div>
@@ -969,8 +969,8 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen) => void }
         <div className="py-5">
           <h3 className="font-semibold text-gray-900 mb-4">Reviews</h3>
           {[
-            { name: "Emily C.", avatar: "photo-1438761681033-6461ffad8d80", rating: 5, text: "Hiroshi is an absolute legend. The pre-dawn Fushimi Inari walk was the highlight of our entire Japan trip. He knew every guard, every shortcut.", date: "Jun 2025" },
-            { name: "David K.", avatar: "photo-1507003211169-0a1dd7228f2d", rating: 5, text: "The tea ceremony was unlike anything I'd experienced. Sensei Yamamoto is a true artist. Hiroshi's storytelling throughout the day made history feel alive.", date: "May 2025" },
+            { name: "Emily C.", avatar: "photo-1438761681033-6461ffad8d80", rating: 5, text: "Rajesh is an absolute legend. The sunrise Chinese Fishing Nets walk was the highlight of our entire Kerala trip. He knew every fisherman, every shortcut.", date: "Jun 2025" },
+            { name: "David K.", avatar: "photo-1507003211169-0a1dd7228f2d", rating: 5, text: "The backwater houseboat cruise was unlike anything I'd experienced. Rajesh's storytelling throughout the day made local history feel alive.", date: "May 2025" },
           ].map((r, i) => (
             <div key={i} className="mb-5 last:mb-0">
               <div className="flex items-center gap-3 mb-2">
@@ -993,7 +993,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen) => void }
       <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 px-4 py-4 z-50">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <div>
-            <span className="text-2xl font-bold text-gray-900">${g.price}</span>
+            <span className="text-2xl font-bold text-gray-900">₹{g.price}</span>
             <span className="text-gray-400 text-sm"> / person</span>
           </div>
           <div className="flex gap-3">
@@ -1015,14 +1015,14 @@ const WIZARD_STEPS = ["Destination", "Dates", "Travelers", "Style", "Requirement
 function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({
-    destination: "Kyoto, Japan",
+    destination: "Kochi, Kerala",
     startDate: "2025-07-14",
     endDate: "2025-07-16",
     flexibleDates: false,
     travelers: 2,
     style: "Cultural & Historical",
     requirements: "Hidden temples, local food, no tourist traps",
-    budget: 400,
+    budget: 8000,
     notes: "Anniversary trip, would love a special surprise element",
   });
 
@@ -1035,7 +1035,7 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       case 0:
         return (
           <div className="flex flex-col gap-4">
-            <Input label="Where do you want to go?" placeholder="e.g. Kyoto, Japan" icon={MapPin} value={form.destination} onChange={v => setField("destination", v)} />
+            <Input label="Where do you want to go?" placeholder="e.g. Kochi, Kerala" icon={MapPin} value={form.destination} onChange={v => setField("destination", v)} />
             <div className="grid grid-cols-2 gap-3">
               {DESTINATIONS.map(d => (
                 <button key={d.id} onClick={() => setField("destination", d.name)} className={`relative rounded-xl overflow-hidden h-24 border-2 transition-all ${form.destination === d.name ? "border-[#0ea472]" : "border-transparent"}`}>
@@ -1115,26 +1115,26 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
       case 5:
         return (
           <div className="flex flex-col gap-4">
-            <label className="text-sm font-semibold text-gray-700">Your total budget (USD)</label>
+            <label className="text-sm font-semibold text-gray-700">Your total budget (INR)</label>
             <div className="text-center py-4">
-              <span className="text-5xl font-bold text-gray-900">${form.budget}</span>
+              <span className="text-5xl font-bold text-gray-900">₹{form.budget}</span>
               <p className="text-sm text-gray-500 mt-1">for {form.travelers} {form.travelers === 1 ? "person" : "people"}</p>
             </div>
             <input
               type="range"
-              min={50}
-              max={2000}
-              step={25}
+              min={1000}
+              max={50000}
+              step={1000}
               value={form.budget}
               onChange={e => setField("budget", parseInt(e.target.value))}
               className="w-full accent-[#0ea472]"
             />
             <div className="flex justify-between text-xs text-gray-400">
-              <span>₹500</span><span>₹20,000+</span>
+              <span>₹1,000</span><span>₹50,000+</span>
             </div>
             <div className="flex gap-2 flex-wrap">
-              {[150, 300, 500, 750, 1000].map(b => (
-                <button key={b} onClick={() => setField("budget", b)} className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${form.budget === b ? "bg-[#0ea472] text-white border-[#0ea472]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>${b}</button>
+              {[3000, 5000, 8000, 15000, 25000].map(b => (
+                <button key={b} onClick={() => setField("budget", b)} className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-all ${form.budget === b ? "bg-[#0ea472] text-white border-[#0ea472]" : "border-gray-200 text-gray-600 hover:border-gray-300"}`}>₹{b}</button>
               ))}
             </div>
           </div>
@@ -1160,7 +1160,7 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               { label: "Dates", value: form.flexibleDates ? "Flexible (any time)" : `${form.startDate} → ${form.endDate}`, icon: Calendar },
               { label: "Travelers", value: `${form.travelers} ${form.travelers === 1 ? "person" : "people"}`, icon: Users },
               { label: "Travel Style", value: form.style, icon: Star },
-              { label: "Budget", value: `$${form.budget}`, icon: DollarSign },
+              { label: "Budget", value: `₹${form.budget}`, icon: DollarSign },
             ].map(item => (
               <div key={item.label} className="flex items-center gap-4 p-4 bg-[#f5f7fa] rounded-xl">
                 <div className="w-9 h-9 rounded-lg bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center flex-shrink-0">
@@ -1277,7 +1277,7 @@ function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
       <div className="mt-6 bg-[#f5f7fa] rounded-2xl p-4 max-w-xs w-full text-left">
         <p className="text-xs font-semibold text-gray-500 mb-2">Trip Summary</p>
         <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Destination</span><span className="font-semibold text-gray-900">Kyoto, Japan</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-500">Destination</span><span className="font-semibold text-gray-900">Kochi, Kerala</span></div>
           <div className="flex justify-between text-sm"><span className="text-gray-500">Dates</span><span className="font-semibold text-gray-900">Jul 14–16</span></div>
           <div className="flex justify-between text-sm"><span className="text-gray-500">Budget</span><span className="font-semibold text-gray-900">₹4,000</span></div>
         </div>
@@ -1440,7 +1440,7 @@ function OffersScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             <MapPin className="w-5 h-5 text-[#0ea472]" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Kyoto, Japan · Jul 14–16</p>
+            <p className="text-sm font-semibold text-gray-900">Kochi, Kerala · Jul 14–16</p>
             <p className="text-xs text-gray-500">Budget ₹3,000–4,500 · 2 travelers · Cultural & Historical</p>
           </div>
           <Badge variant="green">{OFFERS.filter(o => !dismissed.includes(o.id)).length} offers</Badge>
@@ -1464,7 +1464,7 @@ function OffersScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
                     </div>
                   </div>
                   <div className="text-right flex-shrink-0">
-                    <p className="text-xl font-bold text-gray-900">${offer.price}</p>
+                    <p className="text-xl font-bold text-gray-900">₹{offer.price}</p>
                     <p className="text-xs text-gray-400">total offer</p>
                   </div>
                 </div>
@@ -1477,14 +1477,13 @@ function OffersScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
                   </div>
                   <div className="relative h-1.5 bg-gray-200 rounded-full">
                     <div className="absolute left-0 top-0 h-full bg-gray-300 rounded-full w-3/5" />
-                    <div
-                      className={`absolute top-0 h-full rounded-full ${offer.price <= 450 ? "bg-[#0ea472]" : "bg-amber-400"}`}
-                      style={{ width: `${Math.min(100, (offer.price / 500) * 100)}%` }}
+                    <div className={`absolute top-0 h-full rounded-full ${offer.price <= 4500 ? "bg-[#0ea472]" : "bg-amber-400"}`}
+                      style={{ width: `${Math.min(100, (offer.price / 5000) * 100)}%` }}
                     />
                   </div>
                   <div className="flex justify-between text-xs mt-1">
                     <span className="text-gray-400">{offer.originalBudget}</span>
-                    <span className={`font-semibold ${offer.price <= 450 ? "text-[#0ea472]" : "text-amber-600"}`}>${offer.price} {offer.price > 450 ? "↑ above" : "✓ within budget"}</span>
+                    <span className={`font-semibold ${offer.price <= 4500 ? "text-[#0ea472]" : "text-amber-600"}`}>₹{offer.price} {offer.price > 4500 ? "↑ above" : "✓ within budget"}</span>
                   </div>
                 </div>
 
@@ -1540,12 +1539,12 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <button onClick={() => onNavigate("offers")} className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
-          <Avatar src="photo-1507003211169-0a1dd7228f2d" size="md" alt="Hiroshi" />
+          <Avatar src="photo-1507003211169-0a1dd7228f2d" size="md" alt="Rajesh" />
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Hiroshi Tanaka</p>
+            <p className="text-sm font-semibold text-gray-900">Rajesh Nair</p>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-[#0ea472] rounded-full" />
-              <span className="text-xs text-gray-500">Online · Kyoto, Japan</span>
+              <span className="text-xs text-gray-500">Online · Kochi, Kerala</span>
             </div>
           </div>
           <div className="flex gap-1">
@@ -1568,7 +1567,7 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
           <div className="w-6 h-6 rounded-md bg-[#0ea472] flex items-center justify-center flex-shrink-0">
             <MapPin className="w-3.5 h-3.5 text-white" />
           </div>
-          <span className="text-xs text-gray-600 flex-1">Kyoto Cultural Tour · Jul 14–15 · <span className="font-semibold text-[#0ea472]">Offer: ₹3,400</span></span>
+          <span className="text-xs text-gray-600 flex-1">Kochi Cultural Tour · Jul 14–15 · <span className="font-semibold text-[#0ea472]">Offer: ₹3,400</span></span>
           <Btn size="sm" onClick={() => onNavigate("request-submitted")}>Confirm Booking</Btn>
         </div>
       </div>
@@ -1599,7 +1598,7 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && send()}
-              placeholder="Message Hiroshi..."
+              placeholder="Message Rajesh..."
               className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent"
             />
             <Mic className="w-4 h-4 text-gray-400" />
@@ -1640,10 +1639,10 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
           </div>
           <div className="flex items-center justify-between mb-5">
             <div className="flex items-center gap-3">
-              <Avatar src="photo-1507003211169-0a1dd7228f2d" size="lg" alt="Hiroshi" />
+              <Avatar src="photo-1507003211169-0a1dd7228f2d" size="lg" alt="Rajesh" />
               <div>
                 <p className="text-xs text-[#0ea472] font-semibold">Guide Mode</p>
-                <h2 className="text-xl font-bold text-gray-900">Hiroshi Tanaka</h2>
+                <h2 className="text-xl font-bold text-gray-900">Rajesh Nair</h2>
                 <div className="flex items-center gap-1 mt-0.5">
                   <StarRating rating={4.97} />
                   <span className="text-xs text-gray-500 ml-1">4.97 · 312 reviews</span>
@@ -1717,8 +1716,8 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
         {/* Active trips */}
         <h3 className="text-base font-bold text-gray-900 mb-3">Active Trips</h3>
         {[
-          { traveler: "Marcus T.", dest: "Kyoto Cultural", date: "Today, 8:00 AM", avatar: "photo-1507003211169-0a1dd7228f2d", status: "In Progress" },
-          { traveler: "Emily C.", dest: "Nara Day Trip", date: "Tomorrow, 9:00 AM", avatar: "photo-1438761681033-6461ffad8d80", status: "Confirmed" },
+          { traveler: "Marcus T.", dest: "Kochi Cultural", date: "Today, 8:00 AM", avatar: "photo-1507003211169-0a1dd7228f2d", status: "In Progress" },
+          { traveler: "Emily C.", dest: "Munnar Trek", date: "Tomorrow, 9:00 AM", avatar: "photo-1438761681033-6461ffad8d80", status: "Confirmed" },
         ].map(trip => (
           <Card key={trip.traveler} className="p-4 mb-3 flex items-center gap-3">
             <Avatar src={trip.avatar} size="md" alt={trip.traveler} />
@@ -1768,7 +1767,7 @@ function NearbyRequestsScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
             <Navigation className="w-5 h-5 text-[#0ea472]" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Kyoto, Japan</p>
+            <p className="text-sm font-semibold text-gray-900">Kochi, Kerala</p>
             <p className="text-xs text-gray-500">Showing requests within 10 km</p>
           </div>
           <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f7fa] border border-gray-200 rounded-xl text-xs font-semibold text-gray-600">
@@ -1860,8 +1859,8 @@ function CounterOfferModal({ request, onClose, onSend }: {
   onClose: () => void;
   onSend: () => void;
 }) {
-  const [price, setPrice] = useState(350);
-  const [msg, setMsg] = useState("Hello! I'd love to guide you through Kyoto. I have a special route that covers hidden temples and local eateries that aren't in any guidebook.");
+  const [price, setPrice] = useState(3500);
+  const [msg, setMsg] = useState("Hello! I'd love to guide you through Kochi. I have a special route that covers hidden backwater villages and local eateries that aren't in any guidebook.");
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center md:items-center">
@@ -1885,15 +1884,15 @@ function CounterOfferModal({ request, onClose, onSend }: {
 
           {/* Price */}
           <div>
-            <label className="text-sm font-semibold text-gray-700 block mb-2">Your offer price (USD)</label>
+            <label className="text-sm font-semibold text-gray-700 block mb-2">Your offer price (INR)</label>
             <div className="text-center py-3">
-              <span className="text-4xl font-bold text-gray-900">${price}</span>
+              <span className="text-4xl font-bold text-gray-900">₹{price}</span>
             </div>
             <input
               type="range"
-              min={100}
-              max={800}
-              step={10}
+              min={1000}
+              max={10000}
+              step={100}
               value={price}
               onChange={e => setPrice(parseInt(e.target.value))}
               className="w-full accent-[#0ea472]"
@@ -1901,7 +1900,7 @@ function CounterOfferModal({ request, onClose, onSend }: {
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>₹1,000</span>
               <span className="text-[#0ea472] font-semibold">Their budget: {request.budget}</span>
-              <span>₹8,000</span>
+              <span>₹10,000</span>
             </div>
           </div>
 
@@ -1917,7 +1916,7 @@ function CounterOfferModal({ request, onClose, onSend }: {
           </div>
 
           <Btn size="lg" className="w-full" onClick={onSend}>
-            <Send className="w-4 h-4" /> Send Offer · ${price}
+            <Send className="w-4 h-4" /> Send Offer · ₹{price}
           </Btn>
         </div>
       </div>
