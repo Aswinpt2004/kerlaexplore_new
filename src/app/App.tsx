@@ -871,6 +871,7 @@ function PackagesScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 // ─── Screen 4: Package Detail ──────────────────────────────────────────────────
 
 function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { user } = useAuth();
   const g = GUIDES[0];
   const [selectedImg, setSelectedImg] = useState(0);
 
@@ -996,12 +997,31 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen) => void }
             <span className="text-2xl font-bold text-gray-900">₹{g.price}</span>
             <span className="text-gray-400 text-sm"> / person</span>
           </div>
-          <div className="flex gap-3">
-            <button onClick={() => onNavigate("chat")} className="w-11 h-11 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors">
-              <MessageCircle className="w-5 h-5 text-gray-600" />
-            </button>
-            <Btn size="lg" onClick={() => onNavigate("request-submitted")}>Book Package</Btn>
-          </div>
+          {user?.role !== "guide" ? (
+            <div className="flex gap-3">
+              <button 
+                onClick={() => onNavigate("chat", { type: "chat", guideId: g.id })} 
+                className="w-11 h-11 border border-gray-200 rounded-xl flex items-center justify-center hover:bg-gray-50 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5 text-gray-600" />
+              </button>
+              <Btn 
+                size="lg" 
+                onClick={() => onNavigate("request-submitted", { 
+                  type: "booking", 
+                  guideName: g.name, 
+                  destination: g.location.split(",")[0], 
+                  budget: `₹${g.price}` 
+                })}
+              >
+                {user ? "Book Package" : "Login to Book"}
+              </Btn>
+            </div>
+          ) : (
+            <div className="text-sm font-semibold text-gray-500 bg-gray-100 px-4 py-2.5 rounded-xl">
+              Preview Mode (Guide)
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1236,7 +1256,9 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 // ─── Screen 6: Request Submitted ──────────────────────────────────────────────
 
-function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function RequestSubmittedScreen({ onNavigate, data }: { onNavigate: (s: Screen) => void; data?: any }) {
+  const isBooking = data?.type === "booking";
+  
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center relative">
       <button onClick={() => onNavigate("landing")} className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors">
@@ -1246,15 +1268,20 @@ function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
         <div className="w-28 h-28 rounded-full bg-[#f0faf6] border-4 border-[#0ea472] flex items-center justify-center mx-auto">
           <Check className="w-12 h-12 text-[#0ea472]" />
         </div>
-        <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center">
-          <Bell className="w-4 h-4 text-white" />
-        </div>
+        {!isBooking && (
+          <div className="absolute -top-2 -right-2 w-8 h-8 bg-amber-400 rounded-full flex items-center justify-center">
+            <Bell className="w-4 h-4 text-white" />
+          </div>
+        )}
       </div>
       <h1 className="mt-8 text-3xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
-        Request Submitted!
+        {isBooking ? "Booking Confirmed!" : "Request Submitted!"}
       </h1>
       <p className="mt-3 text-gray-500 text-base max-w-xs leading-relaxed">
-        Nearby guides have been notified. You'll start receiving personalized offers shortly.
+        {isBooking 
+          ? `Your booking with ${data?.guideName || "your guide"} is confirmed. Get ready to explore!`
+          : "Nearby guides have been notified. You'll start receiving personalized offers shortly."
+        }
       </p>
 
       {/* Animated pulse */}
@@ -1265,28 +1292,41 @@ function RequestSubmittedScreen({ onNavigate }: { onNavigate: (s: Screen) => voi
               <Navigation className="w-10 h-10 text-[#0ea472]" />
             </div>
           </div>
-          {/* Fake guide dots */}
-          {[[-60, -20], [50, -50], [70, 30], [-40, 60], [10, 70]].map(([x, y], i) => (
-            <div key={i} className="absolute w-9 h-9 bg-white border-2 border-[#0ea472] rounded-full overflow-hidden shadow-md" style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%, -50%)" }}>
-              <img src={`https://images.unsplash.com/${GUIDES[i % 4].avatar}?w=60&h=60&fit=crop&auto=format`} alt="" className="w-full h-full object-cover" />
+          {/* Fake guide dots / single guide avatar */}
+          {isBooking ? (
+            <div className="absolute w-14 h-14 bg-white border-2 border-[#0ea472] rounded-full overflow-hidden shadow-md" style={{ left: "50%", top: "0%", transform: "translate(-50%, -50%)" }}>
+              <img src={`https://images.unsplash.com/${GUIDES[0].avatar}?w=100&h=100&fit=crop&auto=format`} alt="" className="w-full h-full object-cover" />
             </div>
-          ))}
+          ) : (
+            [[-60, -20], [50, -50], [70, 30], [-40, 60], [10, 70]].map(([x, y], i) => (
+              <div key={i} className="absolute w-9 h-9 bg-white border-2 border-[#0ea472] rounded-full overflow-hidden shadow-md" style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)`, transform: "translate(-50%, -50%)" }}>
+                <img src={`https://images.unsplash.com/${GUIDES[i % 4].avatar}?w=60&h=60&fit=crop&auto=format`} alt="" className="w-full h-full object-cover" />
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       <div className="mt-6 bg-[#f5f7fa] rounded-2xl p-4 max-w-xs w-full text-left">
-        <p className="text-xs font-semibold text-gray-500 mb-2">Trip Summary</p>
+        <p className="text-xs font-semibold text-gray-500 mb-2">{isBooking ? "Booking Summary" : "Trip Summary"}</p>
         <div className="flex flex-col gap-1.5">
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Destination</span><span className="font-semibold text-gray-900">Kochi, Kerala</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Dates</span><span className="font-semibold text-gray-900">Jul 14–16</span></div>
-          <div className="flex justify-between text-sm"><span className="text-gray-500">Budget</span><span className="font-semibold text-gray-900">₹4,000</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-500">Destination</span><span className="font-semibold text-gray-900">{data?.destination || "Kochi, Kerala"}</span></div>
+          {isBooking && data?.guideName && <div className="flex justify-between text-sm"><span className="text-gray-500">Guide</span><span className="font-semibold text-gray-900">{data.guideName}</span></div>}
+          <div className="flex justify-between text-sm"><span className="text-gray-500">{isBooking ? "Date" : "Dates"}</span><span className="font-semibold text-gray-900">Jul 14–16</span></div>
+          <div className="flex justify-between text-sm"><span className="text-gray-500">{isBooking ? "Amount Paid" : "Budget"}</span><span className="font-semibold text-gray-900">{data?.budget || "₹4,000"}</span></div>
         </div>
       </div>
 
       <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
-        <Btn size="lg" className="w-full" onClick={() => onNavigate("offers")}>
-          View Offers <ChevronRight className="w-4 h-4" />
-        </Btn>
+        {isBooking ? (
+          <Btn size="lg" className="w-full" onClick={() => onNavigate("chat", { guideId: 1 })}>
+            Chat with Guide <MessageCircle className="w-4 h-4" />
+          </Btn>
+        ) : (
+          <Btn size="lg" className="w-full" onClick={() => onNavigate("offers")}>
+            View Offers <ChevronRight className="w-4 h-4" />
+          </Btn>
+        )}
         <Btn variant="outline" size="lg" className="w-full" onClick={() => onNavigate("traveler-dashboard")}>
           Go to Dashboard
         </Btn>
@@ -2687,6 +2727,8 @@ function AppContent() {
   const { user, logout } = useAuth();
   const [screen, setScreen] = useState<Screen>("landing");
   const [screenData, setScreenData] = useState<any>(null);
+  const [redirectScreen, setRedirectScreen] = useState<Screen | null>(null);
+  const [redirectScreenData, setRedirectScreenData] = useState<any>(null);
 
   // Protected route handler
   const navigate = (s: Screen, data?: any) => {
@@ -2719,13 +2761,18 @@ function AppContent() {
     ];
 
     // Check if route requires authentication
-    if (travelerRoutes.includes(s)) {
+    const isBookingSuccess = s === "request-submitted" && data?.type === "booking";
+    if (travelerRoutes.includes(s) || isBookingSuccess) {
       if (!user || user.role !== "traveler") {
+        setRedirectScreen(s);
+        setRedirectScreenData(data);
         setScreen("login");
         return;
       }
     } else if (guideRoutes.includes(s)) {
       if (!user || user.role !== "guide") {
+        setRedirectScreen(s);
+        setRedirectScreenData(data);
         setScreen("login");
         return;
       }
@@ -2733,6 +2780,12 @@ function AppContent() {
 
     setScreen(s);
     if (data) setScreenData(data);
+
+    // Clear redirect state when successfully navigated to redirect screen
+    if (s === redirectScreen) {
+      setRedirectScreen(null);
+      setRedirectScreenData(null);
+    }
   };
 
   // Add logout handler to navigate function
@@ -2748,9 +2801,21 @@ function AppContent() {
       {screen === "packages" && <PackagesScreen onNavigate={navigate} />}
       {screen === "package-detail" && <PackageDetailScreen onNavigate={navigate} />}
       {screen === "custom-trip" && <CustomTripScreen onNavigate={navigate} />}
-      {screen === "request-submitted" && <RequestSubmittedScreen onNavigate={navigate} />}
-      {screen === "login" && <UnifiedLoginScreen onNavigate={navigate} />}
-      {screen === "traveler-signup" && <TravelerSignUpScreen onNavigate={navigate} />}
+      {screen === "request-submitted" && <RequestSubmittedScreen onNavigate={navigate} data={screenData} />}
+      {screen === "login" && (
+        <UnifiedLoginScreen 
+          onNavigate={navigate} 
+          redirectScreen={redirectScreen} 
+          redirectData={redirectScreenData} 
+        />
+      )}
+      {screen === "traveler-signup" && (
+        <TravelerSignUpScreen 
+          onNavigate={navigate} 
+          redirectScreen={redirectScreen} 
+          redirectData={redirectScreenData} 
+        />
+      )}
       {screen === "traveler-dashboard" && <TravelerDashboardScreen onNavigate={navigate} />}
       {screen === "offers" && <OffersScreen onNavigate={navigate} />}
       {screen === "chat" && <ChatScreen onNavigate={navigate} />}

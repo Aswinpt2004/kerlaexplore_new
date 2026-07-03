@@ -4,10 +4,12 @@ import { useAuth } from "../context/AuthContext";
 import { registerTraveler, travelerExists } from "../lib/travelersDb";
 
 interface TravelerSignUpScreenProps {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, data?: any) => void;
+  redirectScreen?: string | null;
+  redirectData?: any;
 }
 
-export default function TravelerSignUpScreen({ onNavigate }: TravelerSignUpScreenProps) {
+export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redirectData }: TravelerSignUpScreenProps) {
   const { login } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
@@ -105,7 +107,11 @@ export default function TravelerSignUpScreen({ onNavigate }: TravelerSignUpScree
       const result = await login(form.email, form.password, "traveler");
       
       if (result.success) {
-        onNavigate("traveler-dashboard");
+        if (redirectScreen) {
+          onNavigate(redirectScreen, redirectData);
+        } else {
+          onNavigate("traveler-dashboard");
+        }
       } else {
         setError(result.error || "Registration successful but login failed");
         setIsLoading(false);

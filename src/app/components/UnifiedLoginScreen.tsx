@@ -3,10 +3,12 @@ import { ChevronLeft } from "lucide-react";
 import { useAuth, type UserRole } from "../context/AuthContext";
 
 interface UnifiedLoginScreenProps {
-  onNavigate: (screen: string) => void;
+  onNavigate: (screen: string, data?: any) => void;
+  redirectScreen?: string | null;
+  redirectData?: any;
 }
 
-export default function UnifiedLoginScreen({ onNavigate }: UnifiedLoginScreenProps) {
+export default function UnifiedLoginScreen({ onNavigate, redirectScreen, redirectData }: UnifiedLoginScreenProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,11 +28,19 @@ export default function UnifiedLoginScreen({ onNavigate }: UnifiedLoginScreenPro
     const result = await login(email, password, role);
 
     if (result.success) {
-      // Navigate to appropriate dashboard
+      // Navigate to redirect targets if available, else dashboards
       if (role === "guide") {
-        onNavigate("guide-dashboard");
+        if (redirectScreen && redirectScreen.startsWith("guide-")) {
+          onNavigate(redirectScreen, redirectData);
+        } else {
+          onNavigate("guide-dashboard");
+        }
       } else {
-        onNavigate("traveler-dashboard");
+        if (redirectScreen) {
+          onNavigate(redirectScreen, redirectData);
+        } else {
+          onNavigate("traveler-dashboard");
+        }
       }
     } else {
       setError(result.error || "Login failed");
