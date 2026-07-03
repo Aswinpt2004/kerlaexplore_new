@@ -1,5 +1,7 @@
 # KuTo - Travel Marketplace Prototype
 
+**Live Demo**: [keralaexploreprototype.vercel.app](https://keralaexploreprototype.vercel.app)
+
 KuTo (formerly GuideGo) is a high-fidelity prototype of a modern peer-to-peer travel marketplace that connects travelers with local, verified guides in Kerala. The application features a robust custom-trip bidding system, real-time traveler-guide chat, and an interactive AI-powered itinerary generator.
 
 > [!NOTE]
