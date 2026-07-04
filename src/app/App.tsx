@@ -1338,129 +1338,57 @@ function RequestSubmittedScreen({ onNavigate, data }: { onNavigate: (s: Screen) 
 // ──�� Screen 7: Traveler Dashboard ─────────────────────────────────────────────
 
 function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
-  const { logout } = useAuth();
-  const [showSettings, setShowSettings] = useState(false);
-  const statusColors = { offers_received: "green", pending: "amber" } as const;
-  const statusLabels = { offers_received: "Offers Received", pending: "Awaiting Offers" };
+  const { user, logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
-      <SiteHeader onNavigate={onNavigate} />
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4 pt-6 pb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Avatar src="photo-1472099645785-5658abf4ff4e" size="lg" alt="Alex" />
-              <div>
-                <p className="text-xs text-gray-500">Welcome back</p>
-                <h2 className="text-xl font-bold text-gray-900">Alex M.</h2>
-              </div>
+    <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-lg mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>KuTo</h1>
+          <button 
+            onClick={() => {
+              logout();
+              onNavigate("landing");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 rounded-full text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Logout
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <div className="text-center mb-6">
+            <div className="w-24 h-24 bg-[#f0faf6] border-4 border-[#0ea472] rounded-full flex items-center justify-center mx-auto mb-4 text-[#0ea472] text-3xl font-bold">
+              {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "T"}
             </div>
-            <button 
-              onClick={() => setShowSettings(!showSettings)}
-              className="w-9 h-9 border border-gray-200 rounded-full flex items-center justify-center hover:bg-gray-50 relative"
-            >
-              <Settings className="w-4 h-4 text-gray-500" />
-              {showSettings && (
-                <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-100 py-2 w-40 z-50">
-                  <button
-                    onClick={() => {
-                      logout();
-                      setShowSettings(false);
-                      onNavigate("landing");
-                    }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </button>
-                </div>
-              )}
-            </button>
+            <h2 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+              {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Traveler User"}
+            </h2>
+            <span className="inline-block mt-2 px-3 py-1 bg-[#f0faf6] text-[#0ea472] text-xs font-semibold rounded-full border border-[#c6eadc]">
+              Traveler Profile
+            </span>
           </div>
-          <div className="grid grid-cols-3 gap-3 mt-5">
-            {[
-              { label: "Trips Taken", value: "7" },
-              { label: "Countries", value: "4" },
-              { label: "Reviews Given", value: "12" },
-            ].map(stat => (
-              <div key={stat.label} className="bg-[#f5f7fa] rounded-xl p-3 text-center">
-                <p className="text-xl font-bold text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-500">{stat.label}</p>
-              </div>
-            ))}
+
+          <div className="space-y-4 border-t border-gray-100 pt-6">
+            <div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Email Address</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">{user?.email}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Phone Number</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">{user?.phone || "Not provided"}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Account Type</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">Traveler Account (Local Database)</p>
+            </div>
           </div>
         </div>
       </div>
-
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-bold text-gray-900">My Requests</h3>
-          <Btn size="sm" onClick={() => onNavigate("custom-trip")}>
-            <Plus className="w-4 h-4" /> New
-          </Btn>
-        </div>
-
-        <div className="flex flex-col gap-4">
-          {MY_REQUESTS.map(req => (
-            <Card key={req.id} onClick={() => req.status === "offers_received" ? onNavigate("offers") : undefined} className="p-4">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="font-semibold text-gray-900">{req.destination}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{req.date} · {req.travelers} travelers · {req.budget}</p>
-                </div>
-                <Badge variant={statusColors[req.status as keyof typeof statusColors]}>{statusLabels[req.status as keyof typeof statusLabels]}</Badge>
-              </div>
-              {req.status === "offers_received" && (
-                <div className="mt-3 flex items-center justify-between bg-[#f0faf6] rounded-xl p-3">
-                  <div className="flex -space-x-2">
-                    {GUIDES.slice(0, req.offers).map(g => (
-                      <Avatar key={g.id} src={g.avatar} size="sm" alt={g.name} />
-                    ))}
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#0ea472]">{req.offers} offers</p>
-                    <p className="text-xs text-gray-500">Tap to compare</p>
-                  </div>
-                </div>
-              )}
-              {req.status === "pending" && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-xl p-3">
-                  <Bell className="w-4 h-4" />
-                  <span>Waiting for nearby guides to respond...</span>
-                </div>
-              )}
-            </Card>
-          ))}
-        </div>
-
-        {/* Past trips */}
-        <h3 className="text-lg font-bold text-gray-900 mt-8 mb-4">Past Adventures</h3>
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            { dest: "Bali, Indonesia", date: "Mar 2025", img: "photo-1537996194471-e657df975ab4", rating: 5 },
-            { dest: "Santorini, Greece", date: "Oct 2024", img: "photo-1570077188670-e3a8d69ac5ff", rating: 5 },
-          ].map(trip => (
-            <Card key={trip.dest} className="overflow-hidden">
-              <div className="h-28 relative">
-                <UnsplashImg id={trip.img} w={300} h={200} alt={trip.dest} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                <div className="absolute bottom-2 left-3">
-                  <p className="text-white text-xs font-semibold">{trip.dest}</p>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
-                    <span className="text-white text-xs">{trip.rating}</span>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3">
-                <p className="text-xs text-gray-400">{trip.date}</p>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-      <BottomNav active="trips" onNavigate={onNavigate} />
     </div>
   );
 }
@@ -1655,137 +1583,57 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 // ─── Screen 10: Guide Dashboard ───────────────────────────────────────────────
 
 function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
-  const { logout } = useAuth();
-  
+  const { user, logout } = useAuth();
+
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-lg mx-auto px-4 pt-14 pb-6">
-          {/* Mode toggle */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center bg-gray-100 rounded-full p-1">
-              <button onClick={() => onNavigate("landing")} className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700">Traveler</button>
-              <button className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-[#0ea472] text-white shadow">Guide</button>
-            </div>
-            <button 
-              onClick={() => {
-                logout();
-                onNavigate("login");
-              }} 
-              className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" /> Logout
-            </button>
-          </div>
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-3">
-              <Avatar src="photo-1507003211169-0a1dd7228f2d" size="lg" alt="Rajesh" />
-              <div>
-                <p className="text-xs text-[#0ea472] font-semibold">Guide Mode</p>
-                <h2 className="text-xl font-bold text-gray-900">Rajesh Nair</h2>
-                <div className="flex items-center gap-1 mt-0.5">
-                  <StarRating rating={4.97} />
-                  <span className="text-xs text-gray-500 ml-1">4.97 · 312 reviews</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <Badge variant="green"><Shield className="w-3 h-3" /> Verified</Badge>
-              <span className="text-xs text-gray-400">Member since 2016</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2">
-            {[
-              { label: "This Month", value: "₹28,400", icon: DollarSign, color: "text-[#0ea472]" },
-              { label: "Trips Done", value: "312", icon: Award, color: "text-[#1a7fd4]" },
-              { label: "Rating", value: "4.97", icon: Star, color: "text-amber-500" },
-              { label: "Requests", value: "3", icon: Bell, color: "text-purple-500" },
-            ].map(stat => (
-              <div key={stat.label} className="bg-[#f5f7fa] rounded-xl p-3 text-center">
-                <stat.icon className={`w-4 h-4 ${stat.color} mx-auto mb-1`} />
-                <p className="text-sm font-bold text-gray-900">{stat.value}</p>
-                <p className="text-[10px] text-gray-400">{stat.label}</p>
-              </div>
-            ))}
-          </div>
+    <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+        <div className="max-w-lg mx-auto px-4 h-16 flex items-center justify-between">
+          <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>KuTo</h1>
+          <button 
+            onClick={() => {
+              logout();
+              onNavigate("landing");
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 rounded-full text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
+          >
+            <LogOut className="w-3.5 h-3.5" /> Logout
+          </button>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-5 pb-24">
-        {/* Quick actions */}
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <Card onClick={() => onNavigate("nearby-requests")} className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center">
-              <Navigation className="w-5 h-5 text-[#0ea472]" />
+      {/* Main Content */}
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+          <div className="text-center mb-6">
+            <div className="w-24 h-24 bg-blue-50 border-4 border-[#1a7fd4] rounded-full flex items-center justify-center mx-auto mb-4 text-[#1a7fd4] text-3xl font-bold">
+              {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "G"}
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+              {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Guide User"}
+            </h2>
+            <span className="inline-block mt-2 px-3 py-1 bg-blue-50 text-[#1a7fd4] text-xs font-semibold rounded-full border border-blue-200">
+              Guide Profile
+            </span>
+          </div>
+
+          <div className="space-y-4 border-t border-gray-100 pt-6">
+            <div>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Email Address</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">{user?.email}</p>
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900">Nearby</p>
-              <p className="text-xs text-gray-500">3 new requests</p>
-            </div>
-          </Card>
-          <Card className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-200 flex items-center justify-center">
-              <Package className="w-5 h-5 text-[#1a7fd4]" />
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Phone Number</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">{user?.phone || "Not provided"}</p>
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-900">Packages</p>
-              <p className="text-xs text-gray-500">2 active</p>
+              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">Account Type</p>
+              <p className="text-sm font-semibold text-gray-800 mt-1">Guide Account (Local Database)</p>
             </div>
-          </Card>
-          <Card onClick={() => onNavigate("chat")} className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-50 border border-purple-200 flex items-center justify-center">
-              <MessageCircle className="w-5 h-5 text-purple-500" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Messages</p>
-              <p className="text-xs text-gray-500">2 unread</p>
-            </div>
-          </Card>
-          <Card className="p-4 flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-gray-900">Analytics</p>
-              <p className="text-xs text-gray-500">+18% this month</p>
-            </div>
-          </Card>
+          </div>
         </div>
-
-        {/* Active trips */}
-        <h3 className="text-base font-bold text-gray-900 mb-3">Active Trips</h3>
-        {[
-          { traveler: "Marcus T.", dest: "Kochi Cultural", date: "Today, 8:00 AM", avatar: "photo-1507003211169-0a1dd7228f2d", status: "In Progress" },
-          { traveler: "Emily C.", dest: "Munnar Trek", date: "Tomorrow, 9:00 AM", avatar: "photo-1438761681033-6461ffad8d80", status: "Confirmed" },
-        ].map(trip => (
-          <Card key={trip.traveler} className="p-4 mb-3 flex items-center gap-3">
-            <Avatar src={trip.avatar} size="md" alt={trip.traveler} />
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-gray-900">{trip.dest}</p>
-              <p className="text-xs text-gray-500">{trip.traveler} · {trip.date}</p>
-            </div>
-            <Badge variant={trip.status === "In Progress" ? "green" : "blue"}>{trip.status}</Badge>
-          </Card>
-        ))}
-
-        {/* Earnings chart placeholder */}
-        <h3 className="text-base font-bold text-gray-900 mt-5 mb-3">Earnings This Month</h3>
-        <Card className="p-4">
-          <div className="flex items-end justify-between gap-1 h-24">
-            {[40, 65, 45, 80, 55, 90, 70, 60, 75, 85, 50, 95, 72, 88, 62, 78, 91, 68, 84, 77, 59, 83, 66, 92, 74, 87, 61, 79, 95, 82].map((h, i) => (
-              <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === 29 ? "#0ea472" : `rgba(14,164,114,${0.2 + h / 200})` }} />
-            ))}
-          </div>
-          <div className="flex justify-between mt-2">
-            <span className="text-xs text-gray-400">Jun 1</span>
-            <span className="text-xs font-bold text-[#0ea472]">₹28,400 total</span>
-            <span className="text-xs text-gray-400">Jun 30</span>
-          </div>
-        </Card>
       </div>
-
-      <BottomNav active="home" onNavigate={onNavigate} mode="guide" />
     </div>
   );
 }

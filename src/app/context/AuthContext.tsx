@@ -9,6 +9,9 @@ export interface AuthUser {
   email: string;
   role: UserRole;
   id?: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
 }
 
 interface AuthContextType {
@@ -21,6 +24,45 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Helper to enrich user with local DB registration details if they exist
+const enrichUserWithProfile = (baseUser: AuthUser): AuthUser => {
+  const email = baseUser.email.toLowerCase().trim();
+  if (baseUser.role === "traveler") {
+    const raw = localStorage.getItem("kuto_travelers_db");
+    if (raw) {
+      try {
+        const db = JSON.parse(raw);
+        const match = db.find((t: any) => t.email.toLowerCase().trim() === email);
+        if (match) {
+          return {
+            ...baseUser,
+            firstName: match.firstName,
+            lastName: match.lastName,
+            phone: match.phone,
+          };
+        }
+      } catch {}
+    }
+  } else if (baseUser.role === "guide") {
+    const raw = localStorage.getItem("kuto_guides_db");
+    if (raw) {
+      try {
+        const db = JSON.parse(raw);
+        const match = db.find((g: any) => g.email.toLowerCase().trim() === email);
+        if (match) {
+          return {
+            ...baseUser,
+            firstName: match.firstName,
+            lastName: match.lastName,
+            phone: match.phone,
+          };
+        }
+      } catch {}
+    }
+  }
+  return baseUser;
+};
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -60,11 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (role) {
-            setUser({
+            setUser(enrichUserWithProfile({
               id: session.user.id,
               email: session.user.email || "",
               role: role,
-            });
+            }));
             setIsLoading(false);
             return;
           }
@@ -111,14 +153,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
         }
-        setUser({
+        setUser(enrichUserWithProfile({
           id: session.user.id,
           email: session.user.email || "",
           role: role,
-        });
+        }));
       } else {
-        // If there's no Supabase session, check if we have a local mock user.
-        // If not, clear the user.
         const localUserStr = localStorage.getItem("kuto_auth_user");
         if (!localUserStr) {
           setUser(null);
@@ -143,11 +183,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (role === "guide") {
       const guide = findGuide(email, password);
       if (guide) {
-        const authUser = {
+        const authUser = enrichUserWithProfile({
           email: guide.email,
           role: "guide" as UserRole,
           id: `mock-guide-${guide.email}`,
-        };
+        });
         setUser(authUser);
         localStorage.setItem("kuto_auth_user", JSON.stringify(authUser));
         return { success: true };
@@ -155,11 +195,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } else if (role === "traveler") {
       const traveler = findTraveler(email, password);
       if (traveler) {
-        const authUser = {
+        const authUser = enrichUserWithProfile({
           email: traveler.email,
           role: "traveler" as UserRole,
           id: `mock-traveler-${traveler.email}`,
-        };
+        });
         setUser(authUser);
         localStorage.setItem("kuto_auth_user", JSON.stringify(authUser));
         return { success: true };
@@ -229,11 +269,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return tryLocalLogin(email, password, role, `This account is not registered as a ${role}`);
       }
 
-      setUser({
+      setUser(enrichUserWithProfile({
         id: data.user.id,
         email: data.user.email || email,
         role: confirmedRole,
-      });
+      }));
 
       // Clear any stored mock user since we have a valid Supabase session now
       localStorage.removeItem("kuto_auth_user");
