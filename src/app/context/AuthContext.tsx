@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "../lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { findGuide } from "../lib/guidesDb";
+import { findTraveler } from "../lib/travelersDb";
 
 export type UserRole = "guide" | "traveler" | null;
 
@@ -63,10 +65,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               email: session.user.email || "",
               role: role,
             });
+            setIsLoading(false);
+            return;
           }
         }
       } catch (e) {
-        console.error("Error initializing auth:", e);
+        console.error("Error initializing auth via Supabase:", e);
+      }
+
+      // Check local storage for mock/local user fallback
+      try {
+        const localUserStr = localStorage.getItem("kuto_auth_user");
+        if (localUserStr) {
+          setUser(JSON.parse(localUserStr));
+        }
+      } catch (err) {
+        console.error("Error loading local auth fallback:", err);
       } finally {
         setIsLoading(false);
       }
@@ -103,7 +117,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           role: role,
         });
       } else {
-        setUser(null);
+        // If there's no Supabase session, check if we have a local mock user.
+        // If not, clear the user.
+        const localUserStr = localStorage.getItem("kuto_auth_user");
+        if (!localUserStr) {
+          setUser(null);
+        }
       }
       setIsLoading(false);
     });
@@ -112,6 +131,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       subscription.unsubscribe();
     };
   }, []);
+
+  const tryLocalLogin = (
+    email: string,
+    password: string,
+    role: UserRole,
+    originalError: string
+  ): { success: boolean; error?: string } => {
+    console.warn(`Supabase authentication failed (${originalError}). Falling back to local storage database.`);
+    
+    if (role === "guide") {
+      const guide = findGuide(email, password);
+      if (guide) {
+        const authUser = {
+          email: guide.email,
+          role: "guide" as UserRole,
+          id: `mock-guide-${guide.email}`,
+        };
+        setUser(authUser);
+        localStorage.setItem("kuto_auth_user", JSON.stringify(authUser));
+        return { success: true };
+      }
+    } else if (role === "traveler") {
+      const traveler = findTraveler(email, password);
+      if (traveler) {
+        const authUser = {
+          email: traveler.email,
+          role: "traveler" as UserRole,
+          id: `mock-traveler-${traveler.email}`,
+        };
+        setUser(authUser);
+        localStorage.setItem("kuto_auth_user", JSON.stringify(authUser));
+        return { success: true };
+      }
+    }
+    return { success: false, error: originalError || "Wrong credentials" };
+  };
 
   const login = async (
     email: string,
@@ -133,11 +188,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
 
       if (error) {
-        return { success: false, error: error.message };
+        return tryLocalLogin(email, password, role, error.message);
       }
 
       if (!data.user) {
-        return { success: false, error: "Wrong credentials" };
+        return tryLocalLogin(email, password, role, "Wrong credentials");
       }
 
       // Verify the role by checking metadata or querying tables
@@ -167,11 +222,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (!confirmedRole) {
-        return { success: false, error: "Role not set for this account" };
+        return tryLocalLogin(email, password, role, "Role not set for this account");
       }
 
       if (confirmedRole !== role) {
-        return { success: false, error: `This account is not registered as a ${role}` };
+        return tryLocalLogin(email, password, role, `This account is not registered as a ${role}`);
       }
 
       setUser({
@@ -180,15 +235,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: confirmedRole,
       });
 
+      // Clear any stored mock user since we have a valid Supabase session now
+      localStorage.removeItem("kuto_auth_user");
+
       return { success: true };
     } catch (err: any) {
-      return { success: false, error: err.message || "An unexpected error occurred" };
+      return tryLocalLogin(email, password, role, err.message || "An unexpected error occurred");
     }
   };
 
   const logout = () => {
     supabase.auth.signOut().catch(console.error);
     setUser(null);
+    localStorage.removeItem("kuto_auth_user");
   };
 
   const switchRole = (newRole: UserRole) => {
