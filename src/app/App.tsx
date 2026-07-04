@@ -2794,6 +2794,35 @@ function AppContent() {
     setScreen("landing");
   };
 
+  // Automatically navigate when user state changes to prevent state-batching race conditions during login/signup
+  useEffect(() => {
+    if (user) {
+      if (user.role === "traveler") {
+        if (screen === "login" || screen === "traveler-signup") {
+          if (redirectScreen) {
+            setScreen(redirectScreen);
+            setScreenData(redirectScreenData);
+            setRedirectScreen(null);
+            setRedirectScreenData(null);
+          } else {
+            setScreen("traveler-dashboard");
+          }
+        }
+      } else if (user.role === "guide") {
+        if (screen === "login" || screen === "become-guide") {
+          if (redirectScreen && redirectScreen.startsWith("guide-")) {
+            setScreen(redirectScreen);
+            setScreenData(redirectScreenData);
+            setRedirectScreen(null);
+            setRedirectScreenData(null);
+          } else {
+            setScreen("guide-dashboard");
+          }
+        }
+      }
+    }
+  }, [user, screen, redirectScreen, redirectScreenData]);
+
   return (
     <div className="font-sans" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
       {screen === "landing" && <LandingScreen onNavigate={navigate} />}
