@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 import { findGuide } from "../lib/guidesDb";
 import { findTraveler } from "../lib/travelersDb";
 
@@ -17,7 +17,11 @@ export interface AuthUser {
 interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
-  login: (email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    email: string,
+    password: string,
+    role: UserRole
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   switchRole: (newRole: UserRole) => void;
   isAuthenticated: boolean;
@@ -72,11 +76,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (session?.user) {
           // Check role in user_metadata first
-          let role = session.user.user_metadata?.role as UserRole || null;
-          
+          let role = (session.user.user_metadata?.role as UserRole) || null;
+
           if (!role) {
             // Check guides table
             const { data: guide } = await supabase
@@ -102,11 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
 
           if (role) {
-            setUser(enrichUserWithProfile({
-              id: session.user.id,
-              email: session.user.email || "",
-              role: role,
-            }));
+            setUser(
+              enrichUserWithProfile({
+                id: session.user.id,
+                email: session.user.email || "",
+                role: role,
+              })
+            );
             setIsLoading(false);
             return;
           }
@@ -131,9 +139,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        let role = session.user.user_metadata?.role as UserRole || null;
+        let role = (session.user.user_metadata?.role as UserRole) || null;
         if (!role) {
           const { data: guide } = await supabase
             .from("guides")
@@ -153,11 +163,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
         }
-        setUser(enrichUserWithProfile({
-          id: session.user.id,
-          email: session.user.email || "",
-          role: role,
-        }));
+        setUser(
+          enrichUserWithProfile({
+            id: session.user.id,
+            email: session.user.email || "",
+            role: role,
+          })
+        );
       } else {
         const localUserStr = localStorage.getItem("kuto_auth_user");
         if (!localUserStr) {
@@ -178,8 +190,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     role: UserRole,
     originalError: string
   ): { success: boolean; error?: string } => {
-    console.warn(`Supabase authentication failed (${originalError}). Falling back to local storage database.`);
-    
+    console.warn(
+      `Supabase authentication failed (${originalError}). Falling back to local storage database.`
+    );
+
     if (role === "guide") {
       const guide = findGuide(email, password);
       if (guide) {
@@ -236,7 +250,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       // Verify the role by checking metadata or querying tables
-      let confirmedRole = data.user.user_metadata?.role as UserRole || null;
+      let confirmedRole = (data.user.user_metadata?.role as UserRole) || null;
 
       if (!confirmedRole) {
         // Query database tables to find the role
@@ -269,11 +283,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return tryLocalLogin(email, password, role, `This account is not registered as a ${role}`);
       }
 
-      setUser(enrichUserWithProfile({
-        id: data.user.id,
-        email: data.user.email || email,
-        role: confirmedRole,
-      }));
+      setUser(
+        enrichUserWithProfile({
+          id: data.user.id,
+          email: data.user.email || email,
+          role: confirmedRole,
+        })
+      );
 
       // Clear any stored mock user since we have a valid Supabase session now
       localStorage.removeItem("kuto_auth_user");
@@ -290,7 +306,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem("kuto_auth_user");
   };
 
-  const switchRole = (newRole: UserRole) => {
+  const switchRole = (_newRole: UserRole) => {
     logout();
   };
 

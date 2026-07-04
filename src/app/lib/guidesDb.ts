@@ -31,12 +31,14 @@ function writeDb(guides: GuideAccount[]) {
 export function findGuide(email: string, password: string): GuideAccount | undefined {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPassword = password.trim();
-  return readDb().find(g => g.email.toLowerCase() === normalizedEmail && g.password === normalizedPassword);
+  return readDb().find(
+    (g) => g.email.toLowerCase() === normalizedEmail && g.password === normalizedPassword
+  );
 }
 
 export function guideExists(email: string): boolean {
   const normalizedEmail = email.trim().toLowerCase();
-  return readDb().some(g => g.email.toLowerCase() === normalizedEmail);
+  return readDb().some((g) => g.email.toLowerCase() === normalizedEmail);
 }
 
 export function registerGuide(guide: GuideAccount): GuideAccount {

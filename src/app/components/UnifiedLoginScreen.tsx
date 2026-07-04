@@ -3,12 +3,16 @@ import { ChevronLeft } from "lucide-react";
 import { useAuth, type UserRole } from "../context/AuthContext";
 
 interface UnifiedLoginScreenProps {
-  onNavigate: (screen: string, data?: any) => void;
-  redirectScreen?: string | null;
+  onNavigate: (screen: any, data?: any) => void;
+  redirectScreen?: any;
   redirectData?: any;
 }
 
-export default function UnifiedLoginScreen({ onNavigate, redirectScreen, redirectData }: UnifiedLoginScreenProps) {
+export default function UnifiedLoginScreen({
+  onNavigate,
+  redirectScreen,
+  redirectData,
+}: UnifiedLoginScreenProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -144,7 +148,10 @@ export default function UnifiedLoginScreen({ onNavigate, redirectScreen, redirec
           {role === "traveler" && (
             <p className="text-gray-600">
               Don&apos;t have an account?{" "}
-              <button onClick={() => onNavigate("traveler-signup")} className="text-[#0ea472] font-semibold hover:underline">
+              <button
+                onClick={() => onNavigate("traveler-signup")}
+                className="text-[#0ea472] font-semibold hover:underline"
+              >
                 Sign up here
               </button>
             </p>
@@ -153,7 +160,10 @@ export default function UnifiedLoginScreen({ onNavigate, redirectScreen, redirec
           {role === "guide" && (
             <p className="text-gray-600">
               Not registered yet?{" "}
-              <button onClick={() => onNavigate("become-guide")} className="text-[#0ea472] font-semibold hover:underline">
+              <button
+                onClick={() => onNavigate("become-guide")}
+                className="text-[#0ea472] font-semibold hover:underline"
+              >
                 Become a Guide
               </button>
             </p>

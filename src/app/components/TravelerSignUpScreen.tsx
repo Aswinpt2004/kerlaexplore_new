@@ -4,12 +4,16 @@ import { useAuth } from "../context/AuthContext";
 import { registerTraveler, travelerExists } from "../lib/travelersDb";
 
 interface TravelerSignUpScreenProps {
-  onNavigate: (screen: string, data?: any) => void;
-  redirectScreen?: string | null;
+  onNavigate: (screen: any, data?: any) => void;
+  redirectScreen?: any;
   redirectData?: any;
 }
 
-export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redirectData }: TravelerSignUpScreenProps) {
+export default function TravelerSignUpScreen({
+  onNavigate,
+  redirectScreen,
+  redirectData,
+}: TravelerSignUpScreenProps) {
   const { login } = useAuth();
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
@@ -24,7 +28,7 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
   });
 
   const handleChange = (field: string, value: string) => {
-    setForm(f => ({ ...f, [field]: value }));
+    setForm((f) => ({ ...f, [field]: value }));
     setError("");
   };
 
@@ -105,7 +109,7 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
 
       // Auto-login after registration
       const result = await login(form.email, form.password, "traveler");
-      
+
       if (result.success) {
         if (redirectScreen) {
           onNavigate(redirectScreen, redirectData);
@@ -144,7 +148,7 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
       <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <button
-            onClick={() => (step === 0 ? onNavigate("login") : setStep(s => s - 1))}
+            onClick={() => (step === 0 ? onNavigate("login") : setStep((s) => s - 1))}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors"
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" />
@@ -171,7 +175,10 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
       {/* Content */}
       <div className="flex-1 max-w-lg mx-auto w-full px-4 py-8">
         <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+          <h2
+            className="text-2xl font-bold text-gray-900"
+            style={{ fontFamily: "Fraunces, serif" }}
+          >
             {steps[step].title}
           </h2>
           <p className="text-gray-500 text-sm mt-2">{steps[step].subtitle}</p>
@@ -182,26 +189,22 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
           {step === 0 && (
             <>
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">
-                  First Name
-                </label>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">First Name</label>
                 <input
                   type="text"
                   placeholder="John"
                   value={form.firstName}
-                  onChange={e => handleChange("firstName", e.target.value)}
+                  onChange={(e) => handleChange("firstName", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
                 />
               </div>
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">
-                  Last Name
-                </label>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Last Name</label>
                 <input
                   type="text"
                   placeholder="Doe"
                   value={form.lastName}
-                  onChange={e => handleChange("lastName", e.target.value)}
+                  onChange={(e) => handleChange("lastName", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
                 />
               </div>
@@ -218,7 +221,7 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
                   type="email"
                   placeholder="john@example.com"
                   value={form.email}
-                  onChange={e => handleChange("email", e.target.value)}
+                  onChange={(e) => handleChange("email", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
                 />
               </div>
@@ -230,7 +233,7 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
                   type="tel"
                   placeholder="+1 (555) 123-4567"
                   value={form.phone}
-                  onChange={e => handleChange("phone", e.target.value)}
+                  onChange={(e) => handleChange("phone", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
                 />
               </div>
@@ -240,14 +243,12 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
           {step === 2 && (
             <>
               <div>
-                <label className="text-sm font-semibold text-gray-700 block mb-2">
-                  Password
-                </label>
+                <label className="text-sm font-semibold text-gray-700 block mb-2">Password</label>
                 <input
                   type="password"
                   placeholder="Create a strong password"
                   value={form.password}
-                  onChange={e => handleChange("password", e.target.value)}
+                  onChange={(e) => handleChange("password", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
                 />
                 <p className="text-xs text-gray-400 mt-1">At least 6 characters</p>
@@ -260,7 +261,7 @@ export default function TravelerSignUpScreen({ onNavigate, redirectScreen, redir
                   type="password"
                   placeholder="Re-enter your password"
                   value={form.confirmPassword}
-                  onChange={e => handleChange("confirmPassword", e.target.value)}
+                  onChange={(e) => handleChange("confirmPassword", e.target.value)}
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
                 />
               </div>
