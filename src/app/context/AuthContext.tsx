@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { findGuide, guideExists } from "../lib/guidesDb";
-import { findTraveler, travelerExists } from "../lib/travelersDb";
+import { supabase } from "../lib/supabaseClient";
 
 export type UserRole = "guide" | "traveler" | null;
 
@@ -21,24 +20,97 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = "kuto_auth";
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize auth from localStorage on mount
+  // Initialize auth from Supabase on mount
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
+    const initAuth = async () => {
       try {
-        const parsed = JSON.parse(stored);
-        setUser(parsed);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          // Check role in user_metadata first
+          let role = session.user.user_metadata?.role as UserRole || null;
+          
+          if (!role) {
+            // Check guides table
+            const { data: guide } = await supabase
+              .from("guides")
+              .select("id")
+              .eq("id", session.user.id)
+              .maybeSingle();
+
+            if (guide) {
+              role = "guide";
+            } else {
+              // Check travelers table
+              const { data: traveler } = await supabase
+                .from("travelers")
+                .select("id")
+                .eq("id", session.user.id)
+                .maybeSingle();
+
+              if (traveler) {
+                role = "traveler";
+              }
+            }
+          }
+
+          if (role) {
+            setUser({
+              id: session.user.id,
+              email: session.user.email || "",
+              role: role,
+            });
+          }
+        }
       } catch (e) {
-        localStorage.removeItem(STORAGE_KEY);
+        console.error("Error initializing auth:", e);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    initAuth();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        let role = session.user.user_metadata?.role as UserRole || null;
+        if (!role) {
+          const { data: guide } = await supabase
+            .from("guides")
+            .select("id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+          if (guide) {
+            role = "guide";
+          } else {
+            const { data: traveler } = await supabase
+              .from("travelers")
+              .select("id")
+              .eq("id", session.user.id)
+              .maybeSingle();
+            if (traveler) {
+              role = "traveler";
+            }
+          }
+        }
+        setUser({
+          id: session.user.id,
+          email: session.user.email || "",
+          role: role,
+        });
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (
@@ -46,7 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     password: string,
     role: UserRole
   ): Promise<{ success: boolean; error?: string }> => {
-    // Validate inputs
     if (!email || !password) {
       return { success: false, error: "Wrong credentials" };
     }
@@ -55,40 +126,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Please select a role" };
     }
 
-    if (role === "guide") {
-      const guide = findGuide(email, password);
-      if (guide) {
-        const newUser: AuthUser = { email, role: "guide" };
-        setUser(newUser);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-        return { success: true };
-      } else {
-        // Show "Wrong credentials" if data doesn't exist in db
-        return { success: false, error: "Wrong credentials" };
-      }
-    } else if (role === "traveler") {
-      const traveler = findTraveler(email, password);
-      if (traveler) {
-        const newUser: AuthUser = { email, role: "traveler" };
-        setUser(newUser);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(newUser));
-        return { success: true };
-      } else {
-        // Show "Wrong credentials" if data doesn't exist in db
-        return { success: false, error: "Wrong credentials" };
-      }
-    }
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: password.trim(),
+      });
 
-    return { success: false, error: "Wrong credentials" };
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      if (!data.user) {
+        return { success: false, error: "Wrong credentials" };
+      }
+
+      // Verify the role by checking metadata or querying tables
+      let confirmedRole = data.user.user_metadata?.role as UserRole || null;
+
+      if (!confirmedRole) {
+        // Query database tables to find the role
+        const { data: guide } = await supabase
+          .from("guides")
+          .select("id")
+          .eq("id", data.user.id)
+          .maybeSingle();
+
+        if (guide) {
+          confirmedRole = "guide";
+        } else {
+          const { data: traveler } = await supabase
+            .from("travelers")
+            .select("id")
+            .eq("id", data.user.id)
+            .maybeSingle();
+
+          if (traveler) {
+            confirmedRole = "traveler";
+          }
+        }
+      }
+
+      if (!confirmedRole) {
+        return { success: false, error: "Role not set for this account" };
+      }
+
+      if (confirmedRole !== role) {
+        return { success: false, error: `This account is not registered as a ${role}` };
+      }
+
+      setUser({
+        id: data.user.id,
+        email: data.user.email || email,
+        role: confirmedRole,
+      });
+
+      return { success: true };
+    } catch (err: any) {
+      return { success: false, error: err.message || "An unexpected error occurred" };
+    }
   };
 
   const logout = () => {
+    supabase.auth.signOut().catch(console.error);
     setUser(null);
-    localStorage.removeItem(STORAGE_KEY);
   };
 
   const switchRole = (newRole: UserRole) => {
-    // Logout when switching roles
     logout();
   };
 
