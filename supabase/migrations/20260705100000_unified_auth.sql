@@ -1,6 +1,8 @@
 -- ============================================================
--- Migration: Unified Auth & Dashboard Architecture
+-- Migration: Unified Auth & Dashboard Architecture (Idempotent)
 -- Date: 2026-07-05
+-- Safe to re-run: all CREATE statements use IF NOT EXISTS,
+-- all policies are dropped before being recreated.
 -- ============================================================
 
 -- ── 1. Master users table ───────────────────────────────────
@@ -18,8 +20,14 @@ create table if not exists public.users (
   updated_at      timestamptz not null default now()
 );
 
--- RLS
+-- RLS on users
 alter table public.users enable row level security;
+
+-- Drop all users policies first (idempotent)
+drop policy if exists "Users can read own profile"    on public.users;
+drop policy if exists "Users can update own profile"  on public.users;
+drop policy if exists "Admins can read all users"     on public.users;
+drop policy if exists "Admins can update all users"   on public.users;
 
 create policy "Users can read own profile"
   on public.users for select
@@ -63,8 +71,13 @@ alter table public.guides
   add column if not exists password          text,
   add column if not exists updated_at        timestamptz not null default now();
 
--- RLS: guides
-drop policy if exists "Public guides are viewable by everyone." on public.guides;
+-- RLS on guides — drop all first
+drop policy if exists "Public guides are viewable by everyone."  on public.guides;
+drop policy if exists "Approved guides are public"               on public.guides;
+drop policy if exists "Guide admins can view all guides"         on public.guides;
+drop policy if exists "Guide admins can update guide status"     on public.guides;
+drop policy if exists "Guides can insert own profile"            on public.guides;
+drop policy if exists "Users can update their own guide profile." on public.guides;
 
 create policy "Approved guides are public"
   on public.guides for select
@@ -94,13 +107,22 @@ create policy "Guides can insert own profile"
   on public.guides for insert
   with check (true);
 
+-- Allow guides to update their own profile
+create policy "Guides can update own profile"
+  on public.guides for update
+  using (auth.uid() = id);
+
 -- ── 3. Add profile columns to travelers ─────────────────────
 alter table public.travelers
   add column if not exists password    text,
   add column if not exists updated_at  timestamptz not null default now();
 
--- RLS: travelers
-drop policy if exists "Travelers can view their own profile." on public.travelers;
+-- RLS on travelers — drop all first
+drop policy if exists "Travelers can view their own profile."        on public.travelers;
+drop policy if exists "Travelers can view own profile"               on public.travelers;
+drop policy if exists "Traveler admins can view all travelers"       on public.travelers;
+drop policy if exists "Traveler admins can delete travelers"         on public.travelers;
+drop policy if exists "Users can update their own traveler profile." on public.travelers;
 
 create policy "Travelers can view own profile"
   on public.travelers for select
@@ -125,6 +147,16 @@ create policy "Traveler admins can delete travelers"
         and u.role in ('traveler_admin','super_admin')
     )
   );
+
+-- Allow travelers to insert own profile
+create policy "Travelers can insert own profile"
+  on public.travelers for insert
+  with check (true);
+
+-- Allow travelers to update own profile
+create policy "Travelers can update own profile"
+  on public.travelers for update
+  using (auth.uid() = id);
 
 -- ── 4. Drop pending_guides (replaced by guides.status) ──────
 drop table if exists public.pending_guides;
@@ -186,16 +218,14 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ── 6. Admin bootstrap user ─────────────────────────────────
--- Run this block manually in Supabase SQL editor once to create admin accounts.
--- Replace passwords with secure values in production.
--- 
--- After creating the Supabase auth user via Dashboard or Auth API,
--- insert the profile row:
+-- Run this block ONCE manually after creating auth users via the
+-- Supabase Dashboard (Authentication → Add User).
+-- Replace the UUIDs with the actual auth_user_id values.
 --
 -- insert into public.users (auth_user_id, email, full_name, role, status)
 -- values ('<auth_uid_of_guide_admin>', 'guideadmin@kuto.com', 'Guide Admin', 'guide_admin', 'active')
--- on conflict do nothing;
+-- on conflict (auth_user_id) do nothing;
 --
 -- insert into public.users (auth_user_id, email, full_name, role, status)
 -- values ('<auth_uid_of_traveler_admin>', 'traveleradmin@kuto.com', 'Traveler Admin', 'traveler_admin', 'active')
--- on conflict do nothing;
+-- on conflict (auth_user_id) do nothing;
