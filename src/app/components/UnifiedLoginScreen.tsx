@@ -34,7 +34,11 @@ export default function UnifiedLoginScreen({
 
     if (result.success) {
       if (isAdmin) {
-        onNavigate("admin-dashboard");
+        if (role === "guide") {
+          onNavigate("admin-dashboard");
+        } else {
+          onNavigate("traveler-admin-dashboard");
+        }
         return;
       }
       // Navigate to redirect targets if available, else dashboards

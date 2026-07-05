@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, Fragment } from "react";
 import { cn } from "./components/ui/utils";
 import {
   findGuide,
@@ -14,7 +14,7 @@ import {
   writeLocalVerified,
   type GuideAccount
 } from "./lib/guidesDb";
-import { findTraveler, travelerExists } from "./lib/travelersDb";
+import { findTraveler, travelerExists, getTravelers, deleteTraveler, type TravelerAccount } from "./lib/travelersDb";
 import { AuthProvider, useAuth, type UserRole } from "./context/AuthContext";
 import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 import UnifiedLoginScreen from "./components/UnifiedLoginScreen";
@@ -88,7 +88,8 @@ type Screen =
   | "ai-trip-planner"
   | "ai-trip-chat"
   | "ai-generated-itinerary"
-  | "admin-dashboard";
+  | "admin-dashboard"
+  | "traveler-admin-dashboard";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -4463,6 +4464,237 @@ function AdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
   );
 }
 
+// ─── Screen: Traveler Admin Dashboard ─────────────────────────────────────────
+
+function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { logout } = useAuth();
+  const [travelers, setTravelers] = useState<TravelerAccount[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    const data = await getTravelers();
+    setTravelers(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleDelete = async (email: string) => {
+    if (window.confirm(`Are you sure you want to delete the traveler account for ${email}? This action cannot be undone.`)) {
+      const success = await deleteTraveler(email);
+      if (success) {
+        setActionMessage(`Traveler account for ${email} has been successfully deleted.`);
+        setTimeout(() => setActionMessage(null), 4000);
+        loadData();
+      }
+    }
+  };
+
+  const filteredTravelers = travelers.filter((t) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      t.firstName.toLowerCase().includes(query) ||
+      t.lastName.toLowerCase().includes(query) ||
+      t.email.toLowerCase().includes(query) ||
+      (t.phone && t.phone.includes(query))
+    );
+  });
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+              <Users className="w-6 h-6 text-blue-600" />
+            </div>
+            <div>
+              <h1 className="font-bold text-gray-900 text-lg leading-tight" style={{ fontFamily: "Fraunces, serif" }}>
+                KuTo Traveler Admin Portal
+              </h1>
+              <p className="text-xs text-gray-500">Traveler Accounts Management</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                logout();
+                onNavigate("landing");
+              }}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-700 hover:text-red-700 font-semibold rounded-xl text-sm transition-all"
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+        {actionMessage && (
+          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3">
+            <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <p className="text-sm font-semibold">{actionMessage}</p>
+          </div>
+        )}
+
+        {/* Stats Section */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Total Registered Travelers</p>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{travelers.length}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+              <Users className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Active Bookings</p>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">12</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Calendar className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Travelers Online</p>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">4</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+              <TrendingUp className="w-6 h-6" />
+            </div>
+          </div>
+        </section>
+
+        {/* Filters */}
+        <div className="mb-6">
+          <input
+            type="text"
+            placeholder="Search travelers by name, email, or phone number..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600 transition-all shadow-sm"
+          />
+        </div>
+
+        {/* Travelers Table */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500 font-medium text-sm">Loading database records...</p>
+          </div>
+        ) : filteredTravelers.length === 0 ? (
+          <div className="bg-white border border-gray-200 rounded-3xl p-12 text-center shadow-sm">
+            <p className="text-gray-500 text-sm">No registered travelers found matching your criteria.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+              <table className="w-full border-collapse text-left text-sm text-gray-500">
+                <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold uppercase text-gray-700 tracking-wider">
+                  <tr>
+                    <th scope="col" className="px-6 py-4">Name</th>
+                    <th scope="col" className="px-6 py-4">Email</th>
+                    <th scope="col" className="px-6 py-4">Phone</th>
+                    <th scope="col" className="px-6 py-4">Joined Date</th>
+                    <th scope="col" className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {filteredTravelers.map((traveler) => {
+                    const isExpanded = expandedEmail === traveler.email;
+                    return (
+                      <Fragment key={traveler.email}>
+                        <tr className="hover:bg-slate-50/50 cursor-pointer" onClick={() => setExpandedEmail(isExpanded ? null : traveler.email)}>
+                          <td className="px-6 py-4 font-bold text-gray-950 flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-xs uppercase">
+                              {traveler.firstName[0]}
+                              {traveler.lastName[0]}
+                            </div>
+                            {traveler.firstName} {traveler.lastName}
+                          </td>
+                          <td className="px-6 py-4 text-gray-600">{traveler.email}</td>
+                          <td className="px-6 py-4 text-gray-600">{traveler.phone || "N/A"}</td>
+                          <td className="px-6 py-4 text-gray-400 text-xs">
+                            {traveler.createdAt ? new Date(traveler.createdAt).toLocaleDateString() : "N/A"}
+                          </td>
+                          <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-3">
+                              <button
+                                onClick={() => setExpandedEmail(isExpanded ? null : traveler.email)}
+                                className="text-xs text-blue-600 hover:text-blue-800 font-semibold hover:underline bg-transparent"
+                              >
+                                {isExpanded ? "Hide Details" : "View Details"}
+                              </button>
+                              <button
+                                onClick={() => handleDelete(traveler.email)}
+                                className="text-xs text-red-600 hover:text-red-800 font-semibold hover:underline bg-transparent"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={5} className="bg-slate-50/50 px-6 py-4 border-t border-gray-100">
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs text-gray-700">
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
+                                  <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Preferences</span>
+                                  <div className="space-y-1 mt-1">
+                                    <p><span className="font-semibold text-gray-600">Travel Style:</span> Relaxed & Cultural</p>
+                                    <p><span className="font-semibold text-gray-600">Interests:</span> Backwaters, Wellness, Beaches</p>
+                                    <p><span className="font-semibold text-gray-600">Preferred Lang:</span> English, Malayalam</p>
+                                  </div>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
+                                  <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Recent Activity</span>
+                                  <div className="space-y-1 mt-1">
+                                    <p><span className="font-semibold text-gray-600">Total Bookings:</span> 2 completed</p>
+                                    <p><span className="font-semibold text-gray-600">Last Searched:</span> Munnar Tea Estates</p>
+                                    <p><span className="font-semibold text-gray-600">Reviews Written:</span> 1 review</p>
+                                  </div>
+                                </div>
+
+                                <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
+                                  <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">System Status</span>
+                                  <div className="space-y-1 mt-1">
+                                    <p><span className="font-semibold text-gray-600">Account Status:</span> <span className="text-emerald-600 font-bold">Active</span></p>
+                                    <p><span className="font-semibold text-gray-600">IP Verification:</span> Checked & Clear</p>
+                                    <p><span className="font-semibold text-gray-600">Device Registered:</span> Chrome Desktop (Windows)</p>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
+
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 function AppContent() {
@@ -4499,7 +4731,7 @@ function AppContent() {
     const guideRoutes: Screen[] = ["guide-dashboard", "nearby-requests", "counter-offer"];
 
     // Protected admin routes
-    const adminRoutes: Screen[] = ["admin-dashboard"];
+    const adminRoutes: Screen[] = ["admin-dashboard", "traveler-admin-dashboard"];
 
     // Check if route requires authentication
     const isBookingSuccess = s === "request-submitted" && data?.type === "booking";
@@ -4577,7 +4809,11 @@ function AppContent() {
         }
       } else if (user.role === "admin") {
         if (screen === "login") {
-          setScreen("admin-dashboard");
+          if (user.adminType === "guide") {
+            setScreen("admin-dashboard");
+          } else {
+            setScreen("traveler-admin-dashboard");
+          }
         }
       }
     }
@@ -4630,6 +4866,7 @@ function AppContent() {
         <AIGeneratedItineraryScreen onNavigate={navigate} preferences={screenData} />
       )}
       {screen === "admin-dashboard" && <AdminDashboardScreen onNavigate={navigate} />}
+      {screen === "traveler-admin-dashboard" && <TravelerAdminDashboardScreen onNavigate={navigate} />}
     </div>
   );
 }

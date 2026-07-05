@@ -13,6 +13,7 @@ export interface AuthUser {
   lastName?: string;
   phone?: string;
   isPending?: boolean;
+  adminType?: "guide" | "traveler";
 }
 
 interface AuthContextType {
@@ -250,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: "admin@kuto",
         role: "admin" as UserRole,
         id: "mock-admin-id",
+        adminType: role === "guide" ? "guide" : "traveler",
       });
       setUser(adminUser);
       localStorage.setItem("kuto_auth_user", JSON.stringify(adminUser));
@@ -315,6 +317,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: "admin@kuto",
         role: "admin",
         id: "mock-admin-id",
+        adminType: role === "guide" ? "guide" : "traveler",
       });
       setUser(adminUser);
       localStorage.setItem("kuto_auth_user", JSON.stringify(adminUser));
