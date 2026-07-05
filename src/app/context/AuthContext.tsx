@@ -27,7 +27,11 @@ interface AuthContextType {
   user: AuthUser | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  login: (
+    email: string,
+    password: string,
+    roleHint?: "traveler" | "guide" | "admin"
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
 }
 
@@ -131,7 +135,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ── Login ─────────────────────────────────────────────────────────────────
   const login = async (
     email: string,
-    password: string
+    password: string,
+    roleHint?: "traveler" | "guide" | "admin"
   ): Promise<{ success: boolean; error?: string }> => {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -143,7 +148,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: error?.message || "Invalid credentials" };
       }
 
-      // Profile is set by the onAuthStateChange listener above
+      // If a role hint was provided, validate against the DB profile
+      if (roleHint) {
+        const profile = await fetchUserProfile(data.user.id, data.user.email || "");
+        if (profile) {
+          const isAdmin = ["guide_admin", "traveler_admin", "super_admin"].includes(profile.role || "");
+          if (roleHint === "admin" && !isAdmin) {
+            await supabase.auth.signOut();
+            return { success: false, error: "These credentials are not linked to an admin account." };
+          }
+          if (roleHint === "guide" && profile.role !== "guide") {
+            await supabase.auth.signOut();
+            return { success: false, error: "These credentials are not linked to a guide account." };
+          }
+          if (roleHint === "traveler" && profile.role !== "traveler") {
+            await supabase.auth.signOut();
+            return { success: false, error: "These credentials are not linked to a traveler account." };
+          }
+        }
+      }
+
+      // Profile is set by the onAuthStateChange listener
       return { success: true };
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Login failed";
