@@ -374,7 +374,7 @@ const DESTINATIONS = [
   },
 ];
 
-const GUIDES = [
+const STATIC_GUIDES = [
   {
     id: 1,
     name: "Rajesh Nair",
@@ -661,7 +661,7 @@ const MY_REQUESTS = [
 const OFFERS = [
   {
     id: 1,
-    guide: GUIDES[0],
+    guide: STATIC_GUIDES[0],
     price: 3400,
     originalBudget: "₹3,000–4,500",
     message:
@@ -671,7 +671,7 @@ const OFFERS = [
   {
     id: 2,
     guide: {
-      ...GUIDES[1],
+      ...STATIC_GUIDES[1],
       name: "Suresh Kumar",
       avatar: "photo-1506794778202-cad84cf45f1d",
       location: "Alleppey, Kerala",
@@ -689,7 +689,7 @@ const OFFERS = [
   {
     id: 3,
     guide: {
-      ...GUIDES[2],
+      ...STATIC_GUIDES[2],
       name: "Divya Sharma",
       avatar: "photo-1560250097-0b93528c311a",
       location: "Munnar, Kerala",
@@ -1181,7 +1181,7 @@ function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 // ─── Screen 1: Landing ─────────────────────────────────────────────────────────
 
-function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function LandingScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void; guides: any[] }) {
   const [search, setSearch] = useState("");
 
   return (
@@ -1360,7 +1360,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {GUIDES.map((g) => (
+            {guides.map((g) => (
               <Card
                 key={g.id}
                 onClick={() => onNavigate("package-detail")}
@@ -1498,7 +1498,7 @@ function LandingScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 // ─── Screen 2: Destination ─────────────────────────────────────────────────────
 
-function DestinationScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function DestinationScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void; guides: any[] }) {
   const [tab, setTab] = useState<"packages" | "custom">("packages");
 
   return (
@@ -1560,7 +1560,7 @@ function DestinationScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
                 </button>
               ))}
             </div>
-            {GUIDES.slice(0, 3).map((g) => (
+            {guides.slice(0, 3).map((g) => (
               <Card
                 key={g.id}
                 onClick={() => onNavigate("package-detail")}
@@ -1634,19 +1634,19 @@ function DestinationScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) 
 
 // ─── Screen 3: Guide Packages ──────────────────────────────────────────────────
 
-function PackagesScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function PackagesScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void; guides: any[] }) {
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       <TopNav onNavigate={onNavigate} title="Guide Packages" showBack backScreen="destination" />
       <div className="max-w-lg mx-auto px-4 py-6 pb-24">
         <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-500">{GUIDES.length} guides in Kochi</p>
+          <p className="text-sm text-gray-500">{guides.length} guides in Kochi</p>
           <button className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-600">
             <Filter className="w-3.5 h-3.5" /> Filters
           </button>
         </div>
         <div className="flex flex-col gap-4">
-          {GUIDES.map((g) => (
+          {guides.map((g) => (
             <Card
               key={g.id}
               onClick={() => onNavigate("package-detail")}
@@ -1694,7 +1694,7 @@ function PackagesScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-3">
-                  {g.tags.map((tag) => (
+                  {g.tags.map((tag: string) => (
                     <Badge key={tag} variant="outline">
                       {tag}
                     </Badge>
@@ -1732,7 +1732,7 @@ function PackagesScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
   const { user } = useAuth();
-  const g = GUIDES[0];
+  const g = STATIC_GUIDES[0];
   const [selectedImg, setSelectedImg] = useState(0);
 
   return (
@@ -1754,7 +1754,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen, data?: an
           <ChevronLeft className="w-5 h-5 text-white" />
         </button>
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
-          {g.images.map((_, i) => (
+          {g.images.map((_: any, i: number) => (
             <button
               key={i}
               onClick={() => setSelectedImg(i)}
@@ -1809,7 +1809,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen, data?: an
           <h3 className="font-semibold text-gray-900 mb-2">About {g.name.split(" ")[0]}</h3>
           <p className="text-sm text-gray-600 leading-relaxed">{g.bio}</p>
           <div className="flex flex-wrap gap-2 mt-3">
-            {g.tags.map((tag) => (
+            {g.tags.map((tag: string) => (
               <Badge key={tag} variant="green">
                 {tag}
               </Badge>
@@ -1822,7 +1822,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen, data?: an
           <h3 className="font-semibold text-gray-900 mb-4">Day Itinerary</h3>
           <div className="relative">
             <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-gray-100" />
-            {g.itinerary.map((item, i) => (
+            {g.itinerary.map((item: any, i: number) => (
               <div key={i} className="flex gap-4 mb-5 last:mb-0">
                 <div className="w-10 h-10 rounded-full bg-[#f0faf6] border-2 border-[#0ea472] flex items-center justify-center flex-shrink-0 z-10">
                   <span className="text-xs font-bold text-[#0ea472]">{i + 1}</span>
@@ -1841,7 +1841,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen, data?: an
         <div className="py-5 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900 mb-3">What's included</h3>
           <div className="grid grid-cols-2 gap-2">
-            {g.inclusions.map((item) => (
+            {g.inclusions.map((item: string) => (
               <div key={item} className="flex items-center gap-2 text-sm text-gray-600">
                 <div className="w-5 h-5 rounded-full bg-[#f0faf6] flex items-center justify-center flex-shrink-0">
                   <Check className="w-3 h-3 text-[#0ea472]" />
@@ -1928,7 +1928,7 @@ function PackageDetailScreen({ onNavigate }: { onNavigate: (s: Screen, data?: an
   );
 }
 
-// ─── Screen 5: Custom Trip Wizard ────────────────────────────���────────────────
+// ─── Screen 5: Custom Trip Wizard ──────────────────────────────────────────────
 
 const WIZARD_STEPS = [
   "Destination",
@@ -2315,7 +2315,7 @@ function RequestSubmittedScreen({
               style={{ left: "50%", top: "0%", transform: "translate(-50%, -50%)" }}
             >
               <img
-                src={`https://images.unsplash.com/${GUIDES[0].avatar}?w=100&h=100&fit=crop&auto=format`}
+                src={`https://images.unsplash.com/${STATIC_GUIDES[0].avatar}?w=100&h=100&fit=crop&auto=format`}
                 alt=""
                 className="w-full h-full object-cover"
               />
@@ -2338,7 +2338,7 @@ function RequestSubmittedScreen({
                 }}
               >
                 <img
-                  src={`https://images.unsplash.com/${GUIDES[i % 4].avatar}?w=60&h=60&fit=crop&auto=format`}
+                  src={`https://images.unsplash.com/${STATIC_GUIDES[i % 4].avatar}?w=60&h=60&fit=crop&auto=format`}
                   alt=""
                   className="w-full h-full object-cover"
                 />
@@ -2399,7 +2399,7 @@ function RequestSubmittedScreen({
   );
 }
 
-// ──�� Screen 7: Traveler Dashboard ─────────────────────────────────────────────
+// ─── Screen 7: Traveler Dashboard ─────────────────────────────────────────────
 
 function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { user, logout } = useAuth();
@@ -3510,7 +3510,7 @@ function BecomeGuideScreen({
   );
 }
 
-// ─── Screen: Guide Registration Success ─────────────────────────────────────���
+// ─── Screen: Guide Registration Success ──────────────────────────────────────
 
 function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   const { user } = useAuth();
@@ -3881,9 +3881,11 @@ function AITripChatScreen({
 function AIGeneratedItineraryScreen({
   onNavigate,
   preferences,
+  guides,
 }: {
   onNavigate: (s: Screen, data?: any) => void;
   preferences?: any;
+  guides: any[];
 }) {
   // Match preferences to template
   const template = (() => {
@@ -3896,7 +3898,7 @@ function AIGeneratedItineraryScreen({
   })();
 
   const days = parseInt(preferences?.duration?.split("-")[0] || "3");
-  const matchedGuides = GUIDES.filter((g) =>
+  const matchedGuides = guides.filter((g) =>
     template.guideTags.some((tag) => g.specialty.includes(tag))
   ).slice(0, 2);
 
@@ -4511,6 +4513,47 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
     }
   };
 
+  const getTravelerMetrics = (t: TravelerAccount) => {
+    const hash = t.email.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const styles = ["Relaxed & Cultural", "Adventure & Trekking", "Luxury & Wellness", "Backpack & Budget", "Family & Leisure"];
+    const interestsPool = [
+      ["Backwaters", "Wildlife", "Tea Gardens"],
+      ["Historical Sites", "Local Cuisine", "Houseboat Stay"],
+      ["Ayurveda Spa", "Yoga", "Beaches"],
+      ["Water Sports", "Forest Camping", "Mountain Trekking"],
+      ["Kathakali Dance", "Spice Plantations", "Waterfalls"]
+    ];
+    const langPool = [
+      ["English", "Malayalam"],
+      ["English", "Hindi", "Malayalam"],
+      ["English", "Tamil"],
+      ["English", "Malayalam", "German"],
+      ["English", "Malayalam", "French"]
+    ];
+    const style = styles[hash % styles.length];
+    const interests = interestsPool[hash % interestsPool.length];
+    const languages = langPool[hash % langPool.length];
+
+    const totalBookings = (hash % 4) + 1;
+    const destinations = ["Munnar", "Alleppey", "Wayanad", "Varkala", "Kochi", "Thekkady"];
+    const lastSearched = destinations[hash % destinations.length];
+    const reviewsCount = hash % 3;
+    const status = hash % 10 === 0 ? "Suspended" : "Active";
+    const ipStatus = hash % 20 === 0 ? "Under Review" : "Verified";
+
+    return {
+      style,
+      interests: interests.join(", "),
+      languages: languages.join(", "),
+      totalBookings,
+      lastSearched,
+      reviewsCount,
+      status,
+      ipStatus,
+      device: hash % 2 === 0 ? "Chrome Desktop (Windows)" : "Safari Mobile (iOS)"
+    };
+  };
+
   const filteredTravelers = travelers.filter((t) => {
     const query = searchQuery.toLowerCase();
     return (
@@ -4520,6 +4563,9 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
       (t.phone && t.phone.includes(query))
     );
   });
+
+  const activeBookingsCount = travelers.reduce((sum, t) => sum + (t.email.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0) % 3) + 1, 0);
+  const onlineTravelersCount = Math.max(1, Math.round(travelers.length * 0.3));
 
   return (
     <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
@@ -4575,7 +4621,7 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium">Active Bookings</p>
-              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">12</h3>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{activeBookingsCount}</h3>
             </div>
             <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
               <Calendar className="w-6 h-6" />
@@ -4585,7 +4631,7 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500 font-medium">Travelers Online</p>
-              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">4</h3>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{onlineTravelersCount}</h3>
             </div>
             <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
               <TrendingUp className="w-6 h-6" />
@@ -4630,13 +4676,14 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
                 <tbody className="divide-y divide-gray-200">
                   {filteredTravelers.map((traveler) => {
                     const isExpanded = expandedEmail === traveler.email;
+                    const metrics = getTravelerMetrics(traveler);
                     return (
                       <Fragment key={traveler.email}>
                         <tr className="hover:bg-slate-50/50 cursor-pointer" onClick={() => setExpandedEmail(isExpanded ? null : traveler.email)}>
                           <td className="px-6 py-4 font-bold text-gray-950 flex items-center gap-2">
                             <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-xs uppercase">
                               {traveler.firstName[0]}
-                              {traveler.lastName[0]}
+                              {traveler.lastName[0] || ""}
                             </div>
                             {traveler.firstName} {traveler.lastName}
                           </td>
@@ -4670,27 +4717,27 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
                                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
                                   <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Preferences</span>
                                   <div className="space-y-1 mt-1">
-                                    <p><span className="font-semibold text-gray-600">Travel Style:</span> Relaxed & Cultural</p>
-                                    <p><span className="font-semibold text-gray-600">Interests:</span> Backwaters, Wellness, Beaches</p>
-                                    <p><span className="font-semibold text-gray-600">Preferred Lang:</span> English, Malayalam</p>
+                                    <p><span className="font-semibold text-gray-600">Travel Style:</span> {metrics.style}</p>
+                                    <p><span className="font-semibold text-gray-600">Interests:</span> {metrics.interests}</p>
+                                    <p><span className="font-semibold text-gray-600">Preferred Lang:</span> {metrics.languages}</p>
                                   </div>
                                 </div>
 
                                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
                                   <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Recent Activity</span>
                                   <div className="space-y-1 mt-1">
-                                    <p><span className="font-semibold text-gray-600">Total Bookings:</span> 2 completed</p>
-                                    <p><span className="font-semibold text-gray-600">Last Searched:</span> Munnar Tea Estates</p>
-                                    <p><span className="font-semibold text-gray-600">Reviews Written:</span> 1 review</p>
+                                    <p><span className="font-semibold text-gray-600">Total Bookings:</span> {metrics.totalBookings} completed</p>
+                                    <p><span className="font-semibold text-gray-600">Last Searched:</span> {metrics.lastSearched} tours</p>
+                                    <p><span className="font-semibold text-gray-600">Reviews Written:</span> {metrics.reviewsCount} reviews</p>
                                   </div>
                                 </div>
 
                                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm space-y-2">
                                   <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">System Status</span>
                                   <div className="space-y-1 mt-1">
-                                    <p><span className="font-semibold text-gray-600">Account Status:</span> <span className="text-emerald-600 font-bold">Active</span></p>
-                                    <p><span className="font-semibold text-gray-600">IP Verification:</span> Checked & Clear</p>
-                                    <p><span className="font-semibold text-gray-600">Device Registered:</span> Chrome Desktop (Windows)</p>
+                                    <p><span className="font-semibold text-gray-600">Account Status:</span> <span className={`${metrics.status === "Active" ? "text-emerald-600" : "text-red-600"} font-bold`}>{metrics.status}</span></p>
+                                    <p><span className="font-semibold text-gray-600">IP Verification:</span> {metrics.ipStatus}</p>
+                                    <p><span className="font-semibold text-gray-600">Device Registered:</span> {metrics.device}</p>
                                   </div>
                                 </div>
                               </div>
@@ -4710,6 +4757,7 @@ function TravelerAdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) 
   );
 }
 
+
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
 function AppContent() {
@@ -4718,6 +4766,42 @@ function AppContent() {
   const [screenData, setScreenData] = useState<any>(null);
   const [redirectScreen, setRedirectScreen] = useState<Screen | null>(null);
   const [redirectScreenData, setRedirectScreenData] = useState<any>(null);
+
+  const [guidesList, setGuidesList] = useState<any[]>(STATIC_GUIDES);
+
+  const loadVerified = async () => {
+    const dbGuides = await getVerifiedGuides();
+    const mapped = dbGuides.map((g) => ({
+      id: g.id || `db-${g.email}`,
+      name: `${g.firstName} ${g.lastName}`,
+      avatar: "photo-1534528741775-53994a69daeb",
+      location: g.serviceAreas?.[0] || "Kerala",
+      rating: 4.85,
+      reviews: 4,
+      experience: parseFloat(g.yearsExperience || "0") || 1,
+      languages: g.languages || ["English"],
+      price: g.pricePerDay || 1500,
+      duration: "Full Day",
+      specialty: g.specializations?.[0] || "Custom Tours",
+      verified: true,
+      bio: g.biography || "",
+      tags: g.specializations || ["Sightseeing"],
+      images: ["photo-1545569341-9eb8b30979d9"],
+      itinerary: [],
+      email: g.email,
+      phone: g.phone,
+      password: g.password,
+    }));
+
+    const filteredStatic = STATIC_GUIDES.filter(
+      (sg: any) => !mapped.some(mg => mg.email?.toLowerCase() === sg.email?.toLowerCase() || sg.name === mg.name)
+    );
+    setGuidesList([...filteredStatic, ...mapped]);
+  };
+
+  useEffect(() => {
+    loadVerified();
+  }, [screen]);
 
   // Protected route handler
   const navigate = (s: Screen, data?: any) => {
@@ -4836,9 +4920,9 @@ function AppContent() {
 
   return (
     <div className="font-sans" style={{ fontFamily: "'Plus Jakarta Sans', system-ui, sans-serif" }}>
-      {screen === "landing" && <LandingScreen onNavigate={navigate} />}
-      {screen === "destination" && <DestinationScreen onNavigate={navigate} />}
-      {screen === "packages" && <PackagesScreen onNavigate={navigate} />}
+      {screen === "landing" && <LandingScreen onNavigate={navigate} guides={guidesList} />}
+      {screen === "destination" && <DestinationScreen onNavigate={navigate} guides={guidesList} />}
+      {screen === "packages" && <PackagesScreen onNavigate={navigate} guides={guidesList} />}
       {screen === "package-detail" && <PackageDetailScreen onNavigate={navigate} />}
       {screen === "custom-trip" && <CustomTripScreen onNavigate={navigate} />}
       {screen === "request-submitted" && (
@@ -4878,7 +4962,7 @@ function AppContent() {
         <AITripChatScreen onNavigate={navigate} preferences={screenData} />
       )}
       {screen === "ai-generated-itinerary" && (
-        <AIGeneratedItineraryScreen onNavigate={navigate} preferences={screenData} />
+        <AIGeneratedItineraryScreen onNavigate={navigate} preferences={screenData} guides={guidesList} />
       )}
       {screen === "admin-dashboard" && <AdminDashboardScreen onNavigate={navigate} />}
       {screen === "traveler-admin-dashboard" && <TravelerAdminDashboardScreen onNavigate={navigate} />}
