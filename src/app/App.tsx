@@ -1,8 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 import { cn } from "./components/ui/utils";
-import { findGuide, guideExists, registerGuide } from "./lib/guidesDb";
+import {
+  findGuide,
+  guideExists,
+  registerPendingGuide,
+  getPendingGuides,
+  getVerifiedGuides,
+  verifyGuide,
+  rejectPendingGuide,
+  readLocalPending,
+  readLocalVerified,
+  writeLocalPending,
+  writeLocalVerified,
+  type GuideAccount
+} from "./lib/guidesDb";
 import { findTraveler, travelerExists } from "./lib/travelersDb";
 import { AuthProvider, useAuth, type UserRole } from "./context/AuthContext";
+import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 import UnifiedLoginScreen from "./components/UnifiedLoginScreen";
 import TravelerSignUpScreen from "./components/TravelerSignUpScreen";
 import {
@@ -73,7 +87,8 @@ type Screen =
   | "guide-registration-success"
   | "ai-trip-planner"
   | "ai-trip-chat"
-  | "ai-generated-itinerary";
+  | "ai-generated-itinerary"
+  | "admin-dashboard";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -3447,17 +3462,24 @@ function BecomeGuideScreen({
             <Btn
               size="lg"
               className="w-full"
-              onClick={() => {
+              onClick={async () => {
                 if (!form.agreeTerms) return;
-                registerGuide({
+                await registerPendingGuide({
                   firstName: form.firstName,
                   lastName: form.lastName,
                   email: form.email,
                   phone: form.phone,
                   password: form.password,
+                  yearsExperience: form.yearsExperience,
+                  biography: form.biography,
+                  specializations: form.specializations,
+                  languages: form.languages,
+                  pricePerDay: parseFloat(form.pricePerDay) || 0,
+                  availability: form.availability,
+                  serviceAreas: form.serviceAreas,
                 });
                 // Auto-login after registration
-                login(form.email, form.password, "guide");
+                await login(form.email, form.password, "guide");
                 onAuthSuccess();
                 onNavigate("guide-registration-success");
               }}
@@ -3475,6 +3497,9 @@ function BecomeGuideScreen({
 // ─── Screen: Guide Registration Success ─────────────────────────────────────���
 
 function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { user } = useAuth();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-6 text-center relative">
       <button
@@ -3520,12 +3545,25 @@ function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen
           </div>
         </div>
       </div>
+      {errorMsg && (
+        <div className="mt-6 p-4 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-sm font-semibold flex items-center gap-2 max-w-sm w-full text-left">
+          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
       <div className="mt-12 flex flex-col gap-3 w-full">
         <Btn size="lg" className="w-full" onClick={() => onNavigate("landing")}>
           Back to Home
         </Btn>
         <button
-          onClick={() => onNavigate("guide-dashboard")}
+          onClick={() => {
+            if (user?.isPending) {
+              setErrorMsg("Your profile is still under verification. You will be able to access the dashboard once approved.");
+              setTimeout(() => setErrorMsg(null), 5000);
+            } else {
+              onNavigate("guide-dashboard");
+            }
+          }}
           className="px-6 py-3 text-[#0ea472] font-semibold hover:bg-[#f0faf6] rounded-xl transition-colors"
         >
           View Guide Dashboard
@@ -3984,6 +4022,446 @@ function AIGeneratedItineraryScreen({
     </div>
   );
 }
+// ─── Screen: Admin Verification Dashboard ────────────────────────────────────
+
+function AdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+  const { logout, user } = useAuth();
+  const [activeTab, setActiveTab] = useState<"pending" | "verified">("pending");
+  const [pendingGuides, setPendingGuides] = useState<GuideAccount[]>([]);
+  const [verifiedGuides, setVerifiedGuides] = useState<GuideAccount[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    const pending = await getPendingGuides();
+    const verified = await getVerifiedGuides();
+    setPendingGuides(pending);
+    setVerifiedGuides(verified);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const handleVerify = async (email: string) => {
+    const success = await verifyGuide(email);
+    if (success) {
+      setActionMessage(`Guide with email ${email} has been successfully verified!`);
+      setTimeout(() => setActionMessage(null), 4000);
+      loadData();
+    }
+  };
+
+  const handleReject = async (email: string) => {
+    if (window.confirm(`Are you sure you want to reject the guide application for ${email}?`)) {
+      const success = await rejectPendingGuide(email);
+      if (success) {
+        setActionMessage(`Guide application for ${email} has been rejected.`);
+        setTimeout(() => setActionMessage(null), 4000);
+        loadData();
+      }
+    }
+  };
+
+  const filteredVerified = verifiedGuides.filter((g) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      g.firstName.toLowerCase().includes(query) ||
+      g.lastName.toLowerCase().includes(query) ||
+      g.email.toLowerCase().includes(query) ||
+      (g.phone && g.phone.includes(query)) ||
+      (g.specializations && g.specializations.some((s) => s.toLowerCase().includes(query)))
+    );
+  });
+
+  const avgPrice = verifiedGuides.length
+    ? Math.round(verifiedGuides.reduce((sum, g) => sum + (g.pricePerDay || 0), 0) / verifiedGuides.length)
+    : 0;
+
+  return (
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col font-sans">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#0ea472]/10 flex items-center justify-center">
+              <Shield className="w-6 h-6 text-[#0ea472]" />
+            </div>
+            <div>
+              <h1 className="font-bold text-gray-900 text-lg leading-tight" style={{ fontFamily: "Fraunces, serif" }}>
+                KuTo Admin Portal
+              </h1>
+              <p className="text-xs text-gray-500">Verification & Quality Control</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                logout();
+                onNavigate("landing");
+              }}
+              className="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:border-red-200 hover:bg-red-50 text-gray-700 hover:text-red-700 font-semibold rounded-xl text-sm transition-all"
+            >
+              <LogOut className="w-4 h-4" /> Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 py-8">
+        {actionMessage && (
+          <div className="mb-6 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl flex items-center gap-3">
+            <Check className="w-5 h-5 text-emerald-600 flex-shrink-0" />
+            <p className="text-sm font-semibold">{actionMessage}</p>
+          </div>
+        )}
+
+        {/* Stats Section */}
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Verified Guides</p>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{verifiedGuides.length}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-600">
+              <Award className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Pending Verifications</p>
+              <div className="flex items-center gap-2 mt-2">
+                <h3 className="text-3xl font-extrabold text-gray-900">{pendingGuides.length}</h3>
+                {pendingGuides.length > 0 && (
+                  <span className="w-3.5 h-3.5 bg-amber-500 rounded-full animate-pulse" />
+                )}
+              </div>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center text-amber-600">
+              <Clock className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500 font-medium">Average Daily Price</p>
+              <h3 className="text-3xl font-extrabold text-gray-900 mt-2">₹{avgPrice}</h3>
+            </div>
+            <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
+              <DollarSign className="w-6 h-6" />
+            </div>
+          </div>
+        </section>
+
+        {/* Tab Selection */}
+        <div className="flex border-b border-gray-200 mb-6">
+          <button
+            onClick={() => setActiveTab("pending")}
+            className={`py-3 px-6 font-semibold text-sm transition-all border-b-2 -mb-px flex items-center gap-2 ${
+              activeTab === "pending"
+                ? "border-[#0ea472] text-[#0ea472]"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Pending Queue
+            {pendingGuides.length > 0 && (
+              <span className="bg-[#0ea472] text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                {pendingGuides.length}
+              </span>
+            )}
+          </button>
+          <button
+            onClick={() => setActiveTab("verified")}
+            className={`py-3 px-6 font-semibold text-sm transition-all border-b-2 -mb-px flex items-center gap-2 ${
+              activeTab === "verified"
+                ? "border-[#0ea472] text-[#0ea472]"
+                : "border-transparent text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Verified Database
+          </button>
+        </div>
+
+        {/* Tab Content */}
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="w-10 h-10 border-4 border-[#0ea472] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <p className="text-gray-500 font-medium text-sm">Loading database records...</p>
+          </div>
+        ) : activeTab === "pending" ? (
+          pendingGuides.length === 0 ? (
+            <div className="bg-white border border-dashed border-gray-300 rounded-3xl p-12 text-center shadow-sm">
+              <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check className="w-8 h-8 text-emerald-600" />
+              </div>
+              <h4 className="text-lg font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
+                Queue is Clear!
+              </h4>
+              <p className="text-gray-500 text-sm mt-2 max-w-sm mx-auto">
+                All guide applications have been reviewed and verified. Check back later for new signups.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {pendingGuides.map((guide) => {
+                const isExpanded = expandedId === guide.email;
+                return (
+                  <div
+                    key={guide.email}
+                    className="bg-white border border-gray-100 shadow-sm rounded-2xl overflow-hidden transition-all duration-300 hover:shadow-md"
+                  >
+                    {/* Compact View */}
+                    <div className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex gap-4 items-center">
+                        <div className="w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-gray-600 text-lg uppercase">
+                          {guide.firstName[0]}
+                          {guide.lastName[0]}
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 text-base">
+                            {guide.firstName} {guide.lastName}
+                          </h4>
+                          <p className="text-sm text-gray-500 mt-0.5">
+                            {guide.email} • {guide.phone}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-auto">
+                        <button
+                          onClick={() => setExpandedId(isExpanded ? null : guide.email)}
+                          className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-700 font-semibold rounded-xl text-sm transition-colors"
+                        >
+                          {isExpanded ? "Hide Details" : "Review Profile"}
+                        </button>
+                        <button
+                          onClick={() => handleVerify(guide.email)}
+                          className="px-4 py-2 bg-[#0ea472] hover:bg-[#0c9266] text-white font-semibold rounded-xl text-sm shadow-sm transition-colors flex items-center gap-1.5"
+                        >
+                          <Check className="w-4 h-4" /> Approve
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Detailed View */}
+                    {isExpanded && (
+                      <div className="px-6 pb-6 pt-2 border-t border-gray-100 bg-slate-50/50 flex flex-col gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                          <div className="md:col-span-2 space-y-4">
+                            <div>
+                              <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Biography</span>
+                              <p className="text-sm text-gray-700 leading-relaxed italic bg-white p-4 rounded-xl border border-gray-100 shadow-sm mt-1">
+                                &ldquo;{guide.biography || "No biography provided."}&rdquo;
+                              </p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                              <div>
+                                <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Experience</span>
+                                <p className="text-sm font-semibold text-gray-900 mt-1">{guide.yearsExperience} years</p>
+                              </div>
+                              <div>
+                                <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Price per Day</span>
+                                <p className="text-sm font-semibold text-gray-900 mt-1">₹{guide.pricePerDay} / day</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="space-y-4">
+                            <div>
+                              <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Languages</span>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {guide.languages && guide.languages.length > 0 ? (
+                                  guide.languages.map((l) => (
+                                    <span key={l} className="px-2.5 py-1 bg-blue-50 text-blue-700 font-semibold text-xs rounded-full">
+                                      {l}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-400">None specified</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Specializations</span>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {guide.specializations && guide.specializations.length > 0 ? (
+                                  guide.specializations.map((s) => (
+                                    <span key={s} className="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-semibold text-xs rounded-full">
+                                      {s}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-400">None specified</span>
+                                )}
+                              </div>
+                            </div>
+
+                            <div>
+                              <span className="text-[10px] font-bold tracking-wider text-gray-400 uppercase">Service Areas</span>
+                              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                                {guide.serviceAreas && guide.serviceAreas.length > 0 ? (
+                                  guide.serviceAreas.map((a) => (
+                                    <span key={a} className="px-2.5 py-1 bg-purple-50 text-purple-700 font-semibold text-xs rounded-full">
+                                      {a}
+                                    </span>
+                                  ))
+                                ) : (
+                                  <span className="text-xs text-gray-400">None specified</span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Verification Check simulation info */}
+                        <div className="p-4 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Shield className="w-5 h-5 text-blue-600" />
+                            <div>
+                              <p className="text-xs font-bold text-blue-900">Documents verified automatically</p>
+                              <p className="text-[11px] text-blue-700">Identity and regional tourism certifications have been matched.</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={() => handleReject(guide.email)}
+                              className="px-3 py-1.5 border border-red-200 hover:bg-red-50 text-red-600 font-semibold rounded-lg text-xs transition-colors"
+                            >
+                              Reject Application
+                            </button>
+                            <button
+                              onClick={() => handleVerify(guide.email)}
+                              className="px-4 py-1.5 bg-[#0ea472] hover:bg-[#0c9266] text-white font-semibold rounded-lg text-xs transition-colors"
+                            >
+                              Approve
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )
+        ) : (
+          <div>
+            {/* Search Filter bar */}
+            <div className="mb-6">
+              <input
+                type="text"
+                placeholder="Search verified guides by name, email, phone or specialization..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 bg-white rounded-xl text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] transition-all shadow-sm"
+              />
+            </div>
+
+            {filteredVerified.length === 0 ? (
+              <div className="text-center py-12 bg-white border border-gray-200 rounded-3xl">
+                <p className="text-gray-500 text-sm">No verified guides found matching your search query.</p>
+              </div>
+            ) : (
+              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                <table className="w-full border-collapse text-left text-sm text-gray-500">
+                  <thead className="bg-gray-50 border-b border-gray-200 text-xs font-bold uppercase text-gray-700 tracking-wider">
+                    <tr>
+                      <th scope="col" className="px-6 py-4">Name</th>
+                      <th scope="col" className="px-6 py-4">Contact</th>
+                      <th scope="col" className="px-6 py-4">Exp</th>
+                      <th scope="col" className="px-6 py-4">Daily Rate</th>
+                      <th scope="col" className="px-6 py-4">Specialization</th>
+                      <th scope="col" className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredVerified.map((guide) => (
+                      <tr key={guide.email} className="hover:bg-slate-50/50">
+                        <td className="px-6 py-4 font-bold text-gray-950">
+                          {guide.firstName} {guide.lastName}
+                        </td>
+                        <td className="px-6 py-4 text-xs">
+                          <div>{guide.email}</div>
+                          <div className="text-gray-400 mt-0.5">{guide.phone}</div>
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">{guide.yearsExperience} yrs</td>
+                        <td className="px-6 py-4 font-semibold text-gray-900">₹{guide.pricePerDay}</td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-wrap gap-1 max-w-[200px]">
+                            {guide.specializations && guide.specializations.slice(0, 2).map((s) => (
+                              <span key={s} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 font-semibold text-[10px] rounded-full">
+                                {s}
+                              </span>
+                            ))}
+                            {guide.specializations && guide.specializations.length > 2 && (
+                              <span className="text-[10px] text-gray-400 font-medium">+{guide.specializations.length - 2} more</span>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            onClick={async () => {
+                              if (window.confirm(`Revoke verification for ${guide.firstName} ${guide.lastName}?`)) {
+                                const pendingList = readLocalPending();
+                                const activeList = readLocalVerified();
+
+                                if (isSupabaseConfigured) {
+                                  try {
+                                    await supabase.from("guides").delete().eq("email", guide.email);
+                                    await supabase.from("pending_guides").insert({
+                                      id: guide.id || crypto.randomUUID(),
+                                      first_name: guide.firstName,
+                                      last_name: guide.lastName,
+                                      email: guide.email,
+                                      phone: guide.phone,
+                                      password: guide.password,
+                                      years_experience: guide.yearsExperience,
+                                      biography: guide.biography,
+                                      specializations: guide.specializations,
+                                      languages: guide.languages,
+                                      price_per_day: guide.pricePerDay,
+                                      availability: guide.availability,
+                                      service_areas: guide.serviceAreas,
+                                    });
+                                  } catch (err) {
+                                    console.error("Error revoking guide in Supabase:", err);
+                                  }
+                                }
+
+                                writeLocalVerified(activeList.filter((g: GuideAccount) => g.email.toLowerCase() !== guide.email.toLowerCase()));
+                                if (!pendingList.some((g: GuideAccount) => g.email.toLowerCase() === guide.email.toLowerCase())) {
+                                  writeLocalPending([...pendingList, guide]);
+                                }
+
+                                setActionMessage(`Verification revoked for ${guide.firstName}. They have been moved back to the pending queue.`);
+                                setTimeout(() => setActionMessage(null), 4000);
+                                loadData();
+                              }
+                            }}
+                            className="text-xs text-red-600 hover:text-red-800 font-semibold hover:underline bg-transparent"
+                          >
+                            Revoke
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}
 
 // ─── Root App ─────────────────────────────────────────────────────────────────
 
@@ -4020,6 +4498,9 @@ function AppContent() {
     // Protected guide routes
     const guideRoutes: Screen[] = ["guide-dashboard", "nearby-requests", "counter-offer"];
 
+    // Protected admin routes
+    const adminRoutes: Screen[] = ["admin-dashboard"];
+
     // Check if route requires authentication
     const isBookingSuccess = s === "request-submitted" && data?.type === "booking";
     if (travelerRoutes.includes(s) || isBookingSuccess) {
@@ -4031,6 +4512,17 @@ function AppContent() {
       }
     } else if (guideRoutes.includes(s)) {
       if (!user || user.role !== "guide") {
+        setRedirectScreen(s);
+        setRedirectScreenData(data);
+        setScreen("login");
+        return;
+      }
+      if (user.isPending) {
+        setScreen("guide-registration-success");
+        return;
+      }
+    } else if (adminRoutes.includes(s)) {
+      if (!user || user.role !== "admin") {
         setRedirectScreen(s);
         setRedirectScreenData(data);
         setScreen("login");
@@ -4070,14 +4562,22 @@ function AppContent() {
         }
       } else if (user.role === "guide") {
         if (screen === "login" || screen === "become-guide") {
-          if (redirectScreen && redirectScreen.startsWith("guide-")) {
-            setScreen(redirectScreen);
-            setScreenData(redirectScreenData);
-            setRedirectScreen(null);
-            setRedirectScreenData(null);
+          if (user.isPending) {
+            setScreen("guide-registration-success");
           } else {
-            setScreen("guide-dashboard");
+            if (redirectScreen && redirectScreen.startsWith("guide-")) {
+              setScreen(redirectScreen);
+              setScreenData(redirectScreenData);
+              setRedirectScreen(null);
+              setRedirectScreenData(null);
+            } else {
+              setScreen("guide-dashboard");
+            }
           }
+        }
+      } else if (user.role === "admin") {
+        if (screen === "login") {
+          setScreen("admin-dashboard");
         }
       }
     }
@@ -4129,6 +4629,7 @@ function AppContent() {
       {screen === "ai-generated-itinerary" && (
         <AIGeneratedItineraryScreen onNavigate={navigate} preferences={screenData} />
       )}
+      {screen === "admin-dashboard" && <AdminDashboardScreen onNavigate={navigate} />}
     </div>
   );
 }

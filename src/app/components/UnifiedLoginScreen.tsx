@@ -21,7 +21,8 @@ export default function UnifiedLoginScreen({
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!role) {
+    const isAdmin = email.toLowerCase().trim() === "admin@kuto";
+    if (!isAdmin && !role) {
       setError("Please select a role (Traveler or Guide)");
       return;
     }
@@ -29,9 +30,13 @@ export default function UnifiedLoginScreen({
     setIsLoading(true);
     setError("");
 
-    const result = await login(email, password, role);
+    const result = await login(email, password, isAdmin ? "traveler" : role);
 
     if (result.success) {
+      if (isAdmin) {
+        onNavigate("admin-dashboard");
+        return;
+      }
       // Navigate to redirect targets if available, else dashboards
       if (role === "guide") {
         if (redirectScreen && redirectScreen.startsWith("guide-")) {

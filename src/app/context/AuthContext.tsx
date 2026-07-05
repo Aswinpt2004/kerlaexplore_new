@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "../lib/supabaseClient";
-import { findGuide } from "../lib/guidesDb";
+import { findGuide, findPendingGuide } from "../lib/guidesDb";
 import { findTraveler } from "../lib/travelersDb";
 
-export type UserRole = "guide" | "traveler" | null;
+export type UserRole = "guide" | "traveler" | "admin" | null;
 
 export interface AuthUser {
   email: string;
@@ -12,6 +12,7 @@ export interface AuthUser {
   firstName?: string;
   lastName?: string;
   phone?: string;
+  isPending?: boolean;
 }
 
 interface AuthContextType {
@@ -49,10 +50,10 @@ const enrichUserWithProfile = (baseUser: AuthUser): AuthUser => {
       } catch {}
     }
   } else if (baseUser.role === "guide") {
-    const raw = localStorage.getItem("kuto_guides_db");
-    if (raw) {
+    const rawActive = localStorage.getItem("kuto_guides_db");
+    if (rawActive) {
       try {
-        const db = JSON.parse(raw);
+        const db = JSON.parse(rawActive);
         const match = db.find((g: any) => g.email.toLowerCase().trim() === email);
         if (match) {
           return {
@@ -60,10 +61,34 @@ const enrichUserWithProfile = (baseUser: AuthUser): AuthUser => {
             firstName: match.firstName,
             lastName: match.lastName,
             phone: match.phone,
+            isPending: false,
           };
         }
       } catch {}
     }
+
+    const rawPending = localStorage.getItem("kuto_pending_guides_db");
+    if (rawPending) {
+      try {
+        const db = JSON.parse(rawPending);
+        const match = db.find((g: any) => g.email.toLowerCase().trim() === email);
+        if (match) {
+          return {
+            ...baseUser,
+            firstName: match.firstName,
+            lastName: match.lastName,
+            phone: match.phone,
+            isPending: true,
+          };
+        }
+      } catch {}
+    }
+  } else if (baseUser.role === "admin") {
+    return {
+      ...baseUser,
+      firstName: "System",
+      lastName: "Admin",
+    };
   }
   return baseUser;
 };
@@ -80,21 +105,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           data: { session },
         } = await supabase.auth.getSession();
         if (session?.user) {
-          // Check role in user_metadata first
           let role = (session.user.user_metadata?.role as UserRole) || null;
+          let isPending = false;
 
-          if (!role) {
-            // Check guides table
-            const { data: guide } = await supabase
-              .from("guides")
+          // Resolve active or pending state
+          const { data: guide } = await supabase
+            .from("guides")
+            .select("id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+
+          if (guide) {
+            role = "guide";
+            isPending = false;
+          } else {
+            const { data: pending } = await supabase
+              .from("pending_guides")
               .select("id")
               .eq("id", session.user.id)
               .maybeSingle();
 
-            if (guide) {
+            if (pending) {
               role = "guide";
+              isPending = true;
             } else {
-              // Check travelers table
               const { data: traveler } = await supabase
                 .from("travelers")
                 .select("id")
@@ -113,6 +147,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 id: session.user.id,
                 email: session.user.email || "",
                 role: role,
+                isPending: role === "guide" ? isPending : undefined,
               })
             );
             setIsLoading(false);
@@ -144,30 +179,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
         let role = (session.user.user_metadata?.role as UserRole) || null;
-        if (!role) {
-          const { data: guide } = await supabase
-            .from("guides")
+        let isPending = false;
+
+        const { data: guide } = await supabase
+          .from("guides")
+          .select("id")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        if (guide) {
+          role = "guide";
+          isPending = false;
+        } else {
+          const { data: pending } = await supabase
+            .from("pending_guides")
             .select("id")
             .eq("id", session.user.id)
             .maybeSingle();
-          if (guide) {
+
+          if (pending) {
             role = "guide";
+            isPending = true;
           } else {
             const { data: traveler } = await supabase
               .from("travelers")
               .select("id")
               .eq("id", session.user.id)
               .maybeSingle();
+
             if (traveler) {
               role = "traveler";
             }
           }
         }
+
         setUser(
           enrichUserWithProfile({
             id: session.user.id,
             email: session.user.email || "",
             role: role,
+            isPending: role === "guide" ? isPending : undefined,
           })
         );
       } else {
@@ -194,6 +245,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       `Supabase authentication failed (${originalError}). Falling back to local storage database.`
     );
 
+    if (email.toLowerCase().trim() === "admin@kuto" && password === "qwerty") {
+      const adminUser = enrichUserWithProfile({
+        email: "admin@kuto",
+        role: "admin" as UserRole,
+        id: "mock-admin-id",
+      });
+      setUser(adminUser);
+      localStorage.setItem("kuto_auth_user", JSON.stringify(adminUser));
+      return { success: true };
+    }
+
     if (role === "guide") {
       const guide = findGuide(email, password);
       if (guide) {
@@ -201,6 +263,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           email: guide.email,
           role: "guide" as UserRole,
           id: `mock-guide-${guide.email}`,
+          isPending: false,
+        });
+        setUser(authUser);
+        localStorage.setItem("kuto_auth_user", JSON.stringify(authUser));
+        return { success: true };
+      }
+
+      const pending = findPendingGuide(email, password);
+      if (pending) {
+        const authUser = enrichUserWithProfile({
+          email: pending.email,
+          role: "guide" as UserRole,
+          id: `mock-guide-${pending.email}`,
+          isPending: true,
         });
         setUser(authUser);
         localStorage.setItem("kuto_auth_user", JSON.stringify(authUser));
@@ -231,13 +307,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { success: false, error: "Wrong credentials" };
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // Direct Admin check
+    if (normalizedEmail === "admin@kuto" && password === "qwerty") {
+      const adminUser = enrichUserWithProfile({
+        email: "admin@kuto",
+        role: "admin",
+        id: "mock-admin-id",
+      });
+      setUser(adminUser);
+      localStorage.setItem("kuto_auth_user", JSON.stringify(adminUser));
+      return { success: true };
+    }
+
     if (!role) {
       return { success: false, error: "Please select a role" };
     }
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: normalizedEmail,
         password: password.trim(),
       });
 
@@ -249,19 +339,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return tryLocalLogin(email, password, role, "Wrong credentials");
       }
 
-      // Verify the role by checking metadata or querying tables
       let confirmedRole = (data.user.user_metadata?.role as UserRole) || null;
+      let isVerified = false;
 
-      if (!confirmedRole) {
-        // Query database tables to find the role
-        const { data: guide } = await supabase
-          .from("guides")
+      // Check active guides
+      const { data: guide } = await supabase
+        .from("guides")
+        .select("id")
+        .eq("id", data.user.id)
+        .maybeSingle();
+
+      if (guide) {
+        confirmedRole = "guide";
+        isVerified = true;
+      } else {
+        const { data: pending } = await supabase
+          .from("pending_guides")
           .select("id")
           .eq("id", data.user.id)
           .maybeSingle();
 
-        if (guide) {
+        if (pending) {
           confirmedRole = "guide";
+          isVerified = false;
         } else {
           const { data: traveler } = await supabase
             .from("travelers")
@@ -288,12 +388,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           id: data.user.id,
           email: data.user.email || email,
           role: confirmedRole,
+          isPending: confirmedRole === "guide" ? !isVerified : undefined,
         })
       );
 
-      // Clear any stored mock user since we have a valid Supabase session now
       localStorage.removeItem("kuto_auth_user");
-
       return { success: true };
     } catch (err: any) {
       return tryLocalLogin(email, password, role, err.message || "An unexpected error occurred");
