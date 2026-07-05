@@ -1,22 +1,19 @@
 import { useState, useRef, useEffect, Fragment } from "react";
 import { cn } from "./components/ui/utils";
 import {
-  findGuide,
   guideExists,
-  registerPendingGuide,
+  registerGuide,
   getPendingGuides,
   getVerifiedGuides,
+  getAllGuides,
   verifyGuide,
   rejectPendingGuide,
-  readLocalPending,
-  readLocalVerified,
-  writeLocalPending,
-  writeLocalVerified,
+  revokeGuide,
   type GuideAccount
 } from "./lib/guidesDb";
-import { findTraveler, travelerExists, getTravelers, deleteTraveler, type TravelerAccount } from "./lib/travelersDb";
+import { travelerExists, getTravelers, deleteTraveler, type TravelerAccount } from "./lib/travelersDb";
 import { AuthProvider, useAuth, type UserRole } from "./context/AuthContext";
-import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
+import { supabase } from "./lib/supabaseClient";
 import UnifiedLoginScreen from "./components/UnifiedLoginScreen";
 import TravelerSignUpScreen from "./components/TravelerSignUpScreen";
 import {
@@ -3480,7 +3477,7 @@ function BecomeGuideScreen({
               className="w-full"
               onClick={async () => {
                 if (!form.agreeTerms) return;
-                await registerPendingGuide({
+                await registerGuide({
                   firstName: form.firstName,
                   lastName: form.lastName,
                   email: form.email,
@@ -3494,8 +3491,8 @@ function BecomeGuideScreen({
                   availability: form.availability,
                   serviceAreas: form.serviceAreas,
                 });
-                // Auto-login after registration
-                await login(form.email, form.password, "guide");
+                // Auto-login after registration — role from DB
+                await login(form.email, form.password);
                 onAuthSuccess();
                 onNavigate("guide-registration-success");
               }}
@@ -3573,7 +3570,7 @@ function GuideRegistrationSuccessScreen({ onNavigate }: { onNavigate: (s: Screen
         </Btn>
         <button
           onClick={() => {
-            if (user?.isPending) {
+            if (user?.status === "pending") {
               setErrorMsg("Your profile is still under verification. You will be able to access the dashboard once approved.");
               setTimeout(() => setErrorMsg(null), 5000);
             } else {
@@ -4427,37 +4424,7 @@ function AdminDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
                           <button
                             onClick={async () => {
                               if (window.confirm(`Revoke verification for ${guide.firstName} ${guide.lastName}?`)) {
-                                const pendingList = readLocalPending();
-                                const activeList = readLocalVerified();
-
-                                if (isSupabaseConfigured) {
-                                  try {
-                                    await supabase.from("guides").delete().eq("email", guide.email);
-                                    await supabase.from("pending_guides").insert({
-                                      id: guide.id || crypto.randomUUID(),
-                                      first_name: guide.firstName,
-                                      last_name: guide.lastName,
-                                      email: guide.email,
-                                      phone: guide.phone,
-                                      password: guide.password,
-                                      years_experience: guide.yearsExperience,
-                                      biography: guide.biography,
-                                      specializations: guide.specializations,
-                                      languages: guide.languages,
-                                      price_per_day: guide.pricePerDay,
-                                      availability: guide.availability,
-                                      service_areas: guide.serviceAreas,
-                                    });
-                                  } catch (err) {
-                                    console.error("Error revoking guide in Supabase:", err);
-                                  }
-                                }
-
-                                writeLocalVerified(activeList.filter((g: GuideAccount) => g.email.toLowerCase() !== guide.email.toLowerCase()));
-                                if (!pendingList.some((g: GuideAccount) => g.email.toLowerCase() === guide.email.toLowerCase())) {
-                                  writeLocalPending([...pendingList, guide]);
-                                }
-
+                                await revokeGuide(guide.email);
                                 setActionMessage(`Verification revoked for ${guide.firstName}. They have been moved back to the pending queue.`);
                                 setTimeout(() => setActionMessage(null), 4000);
                                 loadData();
@@ -4848,12 +4815,13 @@ function AppContent() {
         setScreen("login");
         return;
       }
-      if (user.isPending) {
+      if (user.status === "pending") {
         setScreen("guide-registration-success");
         return;
       }
     } else if (adminRoutes.includes(s)) {
-      if (!user || user.role !== "admin") {
+      const isAdmin = user && ["guide_admin", "traveler_admin", "super_admin"].includes(user.role || "");
+      if (!isAdmin) {
         setRedirectScreen(s);
         setRedirectScreenData(data);
         setScreen("login");
@@ -4893,7 +4861,7 @@ function AppContent() {
         }
       } else if (user.role === "guide") {
         if (screen === "login" || screen === "become-guide") {
-          if (user.isPending) {
+          if (user.status === "pending") {
             setScreen("guide-registration-success");
           } else {
             if (redirectScreen && redirectScreen.startsWith("guide-")) {
@@ -4906,13 +4874,13 @@ function AppContent() {
             }
           }
         }
-      } else if (user.role === "admin") {
+      } else if (user.role === "guide_admin" || user.role === "super_admin") {
         if (screen === "login") {
-          if (user.adminType === "guide") {
-            setScreen("admin-dashboard");
-          } else {
-            setScreen("traveler-admin-dashboard");
-          }
+          setScreen("admin-dashboard");
+        }
+      } else if (user.role === "traveler_admin") {
+        if (screen === "login") {
+          setScreen("traveler-admin-dashboard");
         }
       }
     }

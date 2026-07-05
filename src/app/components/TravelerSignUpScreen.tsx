@@ -94,14 +94,15 @@ export default function TravelerSignUpScreen({
 
     try {
       // Check if email already exists
-      if (travelerExists(form.email)) {
+      const exists = await travelerExists(form.email);
+      if (exists) {
         setError("Email already registered. Please login instead.");
         setIsLoading(false);
         return;
       }
 
       // Register traveler
-      registerTraveler({
+      await registerTraveler({
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
@@ -109,8 +110,8 @@ export default function TravelerSignUpScreen({
         password: form.password,
       });
 
-      // Auto-login after registration
-      const result = await login(form.email, form.password, "traveler");
+      // Auto-login after registration — role comes from DB automatically
+      const result = await login(form.email, form.password);
 
       if (result.success) {
         if (redirectScreen) {

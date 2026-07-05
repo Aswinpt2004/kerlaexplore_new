@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { ChevronLeft, Eye, EyeOff } from "lucide-react";
-import { useAuth, type UserRole } from "../context/AuthContext";
+import { ChevronLeft, Eye, EyeOff, Loader2 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
 
 interface UnifiedLoginScreenProps {
   onNavigate: (screen: any, data?: any) => void;
@@ -10,61 +10,28 @@ interface UnifiedLoginScreenProps {
 
 export default function UnifiedLoginScreen({
   onNavigate,
-  redirectScreen,
-  redirectData,
 }: UnifiedLoginScreenProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState<UserRole>(null);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    const isAdmin = email.toLowerCase().trim() === "admin@kuto";
-    if (!isAdmin && !role) {
-      setError("Please select a role (Traveler or Guide)");
-      return;
-    }
+    if (!email.trim()) { setError("Please enter your email."); return; }
+    if (!password)     { setError("Please enter your password."); return; }
 
     setIsLoading(true);
     setError("");
 
-    const result = await login(email, password, isAdmin ? "traveler" : role);
+    const result = await login(email.trim(), password);
+    setIsLoading(false);
 
-    if (result.success) {
-      if (isAdmin) {
-        if (role === "guide") {
-          onNavigate("admin-dashboard");
-        } else {
-          onNavigate("traveler-admin-dashboard");
-        }
-        return;
-      }
-      // Navigate to redirect targets if available, else dashboards
-      if (role === "guide") {
-        if (redirectScreen && redirectScreen.startsWith("guide-")) {
-          onNavigate(redirectScreen, redirectData);
-        } else {
-          onNavigate("guide-dashboard");
-        }
-      } else {
-        if (redirectScreen) {
-          onNavigate(redirectScreen, redirectData);
-        } else {
-          onNavigate("traveler-dashboard");
-        }
-      }
-    } else {
-      setError(result.error || "Login failed");
-      setIsLoading(false);
+    if (!result.success) {
+      setError(result.error || "Login failed. Please check your credentials.");
     }
-  };
-
-  const handleRoleChange = (newRole: UserRole) => {
-    setRole(newRole);
-    setError("");
+    // Navigation is handled by AppContent via the user state change
   };
 
   return (
@@ -84,109 +51,98 @@ export default function UnifiedLoginScreen({
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col px-6 pt-10 max-w-sm mx-auto w-full">
-        <h1 className="text-2xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
-          Welcome back
-        </h1>
-        <p className="text-gray-600 mt-2">Select your role and log in to continue.</p>
-
-        {/* Role Selection */}
-        <div className="mt-8 mb-8">
-          <label className="text-sm font-semibold text-gray-700 block mb-3">I am a:</label>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => handleRoleChange("traveler")}
-              className={`py-3 px-4 rounded-lg border-2 font-semibold transition-all text-center ${
-                role === "traveler"
-                  ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]"
-                  : "border-gray-200 text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Traveler
-            </button>
-            <button
-              onClick={() => handleRoleChange("guide")}
-              className={`py-3 px-4 rounded-lg border-2 font-semibold transition-all text-center ${
-                role === "guide"
-                  ? "border-[#0ea472] bg-[#f0faf6] text-[#0ea472]"
-                  : "border-gray-200 text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Guide
-            </button>
-          </div>
-        </div>
-
-        {/* Login Form */}
-        <div className="flex flex-col gap-4">
-          <div>
-            <label className="text-sm font-semibold text-gray-700 block mb-2">Email</label>
-            <input
-              type="email"
-              placeholder="your@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-sm font-semibold text-gray-700 block mb-2">Password</label>
-            <div className="relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-4 pr-10 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#0ea472]"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
-            </div>
-          </div>
-
-          {error && <p className="text-sm text-red-600">{error}</p>}
-
-          <button
-            onClick={handleLogin}
-            disabled={!email || !password || !role || isLoading}
-            className="w-full mt-2 bg-[#0ea472] text-white font-semibold py-3 px-4 rounded-lg hover:bg-[#0c9266] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+      <div className="flex-1 flex flex-col px-6 pt-10 pb-8 max-w-sm mx-auto w-full">
+        <div className="mb-8">
+          <h1
+            className="text-2xl font-bold text-gray-900"
+            style={{ fontFamily: "Fraunces, serif" }}
           >
-            {isLoading ? "Logging in..." : "Login"}
-          </button>
+            Welcome back
+          </h1>
+          <p className="text-gray-500 mt-2 text-sm leading-relaxed">
+            Sign in to continue. Your role will be loaded automatically.
+          </p>
         </div>
 
-        {/* Registration Links */}
-        <div className="mt-8 space-y-3 text-center text-sm">
-          {role === "traveler" && (
-            <p className="text-gray-600">
-              Don&apos;t have an account?{" "}
-              <button
-                onClick={() => onNavigate("traveler-signup")}
-                className="text-[#0ea472] font-semibold hover:underline"
-              >
-                Sign up here
-              </button>
-            </p>
-          )}
+        {/* Error */}
+        {error && (
+          <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium">
+            {error}
+          </div>
+        )}
 
-          {role === "guide" && (
-            <p className="text-gray-600">
-              Not registered yet?{" "}
-              <button
-                onClick={() => onNavigate("become-guide")}
-                className="text-[#0ea472] font-semibold hover:underline"
-              >
-                Become a Guide
-              </button>
-            </p>
+        {/* Email */}
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Email address
+          </label>
+          <input
+            id="login-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => { setEmail(e.target.value); setError(""); }}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+            placeholder="you@example.com"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] transition-all"
+          />
+        </div>
+
+        {/* Password */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="login-password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); setError(""); }}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              placeholder="Enter your password"
+              className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] transition-all"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700 transition-colors"
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Login Button */}
+        <button
+          id="login-submit-btn"
+          onClick={handleLogin}
+          disabled={isLoading}
+          className="w-full bg-[#0ea472] hover:bg-[#0c9266] text-white font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Signing in...
+            </>
+          ) : (
+            "Login"
           )}
+        </button>
+
+        {/* Footer links */}
+        <div className="mt-6 flex flex-col items-center gap-4">
+          <button
+            onClick={() => onNavigate("traveler-signup")}
+            className="text-sm text-gray-600 hover:text-[#0ea472] font-medium transition-colors"
+          >
+            Don't have an account?{" "}
+            <span className="text-[#0ea472] font-semibold">Create one</span>
+          </button>
+          <button className="text-xs text-gray-400 hover:text-gray-600 transition-colors">
+            Forgot password?
+          </button>
         </div>
       </div>
     </div>
