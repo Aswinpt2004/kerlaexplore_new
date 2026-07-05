@@ -339,80 +339,10 @@ create trigger on_auth_user_created
   for each row execute procedure public.handle_new_user();
 
 -- ================================================================
--- PHASE 6: CREATE ADMIN USERS
--- Credentials:
---   Guide Admin     → guideadmin@kuto.com    / Admin@Guide123
---   Traveler Admin  → traveleradmin@kuto.com / Admin@Traveler123
+-- PHASE 6: Admin users are seeded in migration 20260705120000_admin_seed.sql
 -- ================================================================
 
-do $$
-declare
-  v_guide_admin_id    uuid := gen_random_uuid();
-  v_traveler_admin_id uuid := gen_random_uuid();
-begin
-
-  -- ── Guide Admin auth user ─────────────────────────────────
-  insert into auth.users (
-    instance_id, id, aud, role,
-    email, encrypted_password, email_confirmed_at,
-    raw_app_meta_data, raw_user_meta_data,
-    created_at, updated_at,
-    confirmation_token, email_change,
-    email_change_token_new, recovery_token
-  )
-  values (
-    '00000000-0000-0000-0000-000000000000',
-    v_guide_admin_id,
-    'authenticated', 'authenticated',
-    'guideadmin@kuto.com',
-    crypt('Admin@Guide123', gen_salt('bf')),
-    now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"role":"guide_admin","firstName":"Guide","lastName":"Admin"}',
-    now(), now(),
-    '', '', '', ''
-  )
-  on conflict (email) do nothing;
-
-  -- Guide Admin profile row
-  insert into public.users (auth_user_id, email, full_name, role, status)
-  values (v_guide_admin_id, 'guideadmin@kuto.com', 'Guide Admin', 'guide_admin', 'active')
-  on conflict (auth_user_id) do nothing;
-
-  -- ── Traveler Admin auth user ──────────────────────────────
-  insert into auth.users (
-    instance_id, id, aud, role,
-    email, encrypted_password, email_confirmed_at,
-    raw_app_meta_data, raw_user_meta_data,
-    created_at, updated_at,
-    confirmation_token, email_change,
-    email_change_token_new, recovery_token
-  )
-  values (
-    '00000000-0000-0000-0000-000000000000',
-    v_traveler_admin_id,
-    'authenticated', 'authenticated',
-    'traveleradmin@kuto.com',
-    crypt('Admin@Traveler123', gen_salt('bf')),
-    now(),
-    '{"provider":"email","providers":["email"]}',
-    '{"role":"traveler_admin","firstName":"Traveler","lastName":"Admin"}',
-    now(), now(),
-    '', '', '', ''
-  )
-  on conflict (email) do nothing;
-
-  -- Traveler Admin profile row
-  insert into public.users (auth_user_id, email, full_name, role, status)
-  values (v_traveler_admin_id, 'traveleradmin@kuto.com', 'Traveler Admin', 'traveler_admin', 'active')
-  on conflict (auth_user_id) do nothing;
-
-end;
-$$;
-
--- ================================================================
--- PHASE 7: VERIFY — quick sanity check
--- ================================================================
+-- Verify tables were created
 select 'users' as table_name, count(*) as rows from public.users
 union all
 select 'guides',    count(*) from public.guides
@@ -424,3 +354,5 @@ union all
 select 'reviews',   count(*) from public.reviews
 union all
 select 'support_tickets', count(*) from public.support_tickets;
+
+
