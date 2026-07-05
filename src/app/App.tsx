@@ -63,6 +63,8 @@ import {
   Zap,
   MapPinCheck,
   AlertCircle,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -919,6 +921,10 @@ function Input({
   type?: string;
   required?: boolean;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const isPassword = type === "password";
+  const actualType = isPassword ? (showPassword ? "text" : "password") : type;
+
   return (
     <div className="flex flex-col gap-1.5">
       {label && (
@@ -932,12 +938,21 @@ function Input({
           <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
         )}
         <input
-          type={type}
+          type={actualType}
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
           placeholder={placeholder}
-          className={`w-full bg-[#f5f7fa] border border-transparent rounded-xl py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] transition-all ${Icon ? "pl-10 pr-4" : "px-4"}`}
+          className={`w-full bg-[#f5f7fa] border border-transparent rounded-xl py-3 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] transition-all ${Icon ? "pl-10 pr-10" : "pl-4 pr-10"}`}
         />
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none flex items-center"
+          >
+            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+          </button>
+        )}
       </div>
     </div>
   );
