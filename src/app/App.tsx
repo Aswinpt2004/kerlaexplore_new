@@ -961,7 +961,7 @@ function BottomNav({
   mode = "traveler",
 }: {
   active: "home" | "explore" | "trips" | "profile" | "requests" | "packages" | "messages";
-  onNavigate: (s: Screen) => void;
+  onNavigate: (s: Screen, data?: any) => void;
   mode?: "traveler" | "guide";
 }) {
   const travelerItems = [
@@ -979,7 +979,7 @@ function BottomNav({
   ];
   const items = mode === "guide" ? guideItems : travelerItems;
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50 md:hidden">
+    <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-gray-100 z-50">
       <div className="flex items-center justify-around px-2 py-2">
         {items.map((item) => (
           <button
@@ -1009,7 +1009,7 @@ function TopNav({
   backScreen,
   mode = "traveler",
 }: {
-  onNavigate: (s: Screen) => void;
+  onNavigate: (s: Screen, data?: any) => void;
   title?: string;
   showBack?: boolean;
   backScreen?: Screen;
@@ -1062,7 +1062,7 @@ function TopNav({
   );
 }
 
-function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function SiteHeader({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
   const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
 
@@ -1124,21 +1124,21 @@ function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
         </nav>
         <div className="flex items-center gap-3 relative">
           {user ? (
-            <div className="hidden md:flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-xs font-semibold text-gray-700">
+            <div className="flex items-center gap-2">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1 bg-gray-100 rounded-full text-[10px] font-semibold text-gray-700">
                 {user.role === "guide" ? "Guide" : "Traveler"}
               </div>
               <button
                 onClick={() => setShowMenu(!showMenu)}
-                className="w-9 h-9 rounded-full hover:bg-gray-100 flex items-center justify-center relative"
+                className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center relative"
               >
                 <Avatar src="photo-1472099645785-5658abf4ff4e" size="sm" alt="Profile" />
               </button>
               {showMenu && (
                 <div className="absolute top-full right-0 mt-2 bg-white rounded-lg shadow-lg border border-gray-100 py-2 w-48 z-50">
                   <div className="px-4 py-2 border-b border-gray-100">
-                    <p className="text-xs text-gray-500">Logged in as</p>
-                    <p className="text-sm font-semibold text-gray-900">{user.email}</p>
+                    <p className="text-[10px] text-gray-500">Logged in as</p>
+                    <p className="text-xs font-semibold text-gray-900 truncate">{user.email}</p>
                   </div>
                   <button
                     onClick={() => {
@@ -1146,27 +1146,21 @@ function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
                       setShowMenu(false);
                       onNavigate("landing");
                     }}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 flex items-center gap-2"
+                    className="w-full text-left px-4 py-2 text-xs text-red-600 hover:bg-gray-50 flex items-center gap-2"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 h-3.5" />
                     Logout
                   </button>
                 </div>
               )}
             </div>
           ) : (
-            <div className="hidden md:flex items-center bg-gray-100 rounded-full p-1">
+            <div className="flex items-center bg-gray-100 rounded-full p-0.5">
               <button
                 onClick={() => onNavigate("login")}
-                className="px-3 py-1 rounded-full text-xs font-semibold transition-all bg-white shadow text-gray-900"
+                className="px-3 py-1 rounded-full text-[10px] font-bold transition-all bg-white shadow text-gray-900"
               >
                 Login
-              </button>
-              <button
-                onClick={() => onNavigate("guide-landing")}
-                className="px-3 py-1 rounded-full text-xs font-semibold transition-all text-gray-500 hover:text-gray-700"
-              >
-                Become Guide
               </button>
             </div>
           )}
@@ -1178,315 +1172,297 @@ function SiteHeader({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 // ─── Screen 1: Landing ─────────────────────────────────────────────────────────
 
-function LandingScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void; guides: any[] }) {
+function LandingScreen({ onNavigate, guides }: { onNavigate: (s: Screen, data?: any) => void; guides: any[] }) {
   const [search, setSearch] = useState("");
 
   return (
-    <div className="min-h-screen bg-white">
-      <SiteHeader onNavigate={onNavigate} />
+    <div className="flex-1 flex flex-col min-h-0 bg-white relative">
+      <div className="flex-1 overflow-y-auto pb-16 scrollbar-hide flex flex-col">
+        <SiteHeader onNavigate={onNavigate} />
 
-      {/* Hero */}
-      <section className="relative min-h-[640px] md:h-[680px]">
-        <UnsplashImg
-          id="photo-1506905925346-21bda4d32df4"
-          w={1600}
-          h={900}
-          alt="Mountain landscape"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
-        <div className="relative h-full flex flex-col items-center justify-center px-6 py-10 text-center">
-          <Badge variant="green">✦ 2,400+ Verified Local Guides</Badge>
-          <h1
-            className="mt-5 text-4xl md:text-6xl font-bold text-white leading-tight max-w-3xl"
-            style={{ fontFamily: "Fraunces, serif" }}
-          >
-            Travel like you already live there.
-          </h1>
-          <p className="mt-4 text-lg text-white/80 max-w-xl font-light">
-            Book an expert local guide or post your custom trip. Nearby guides will compete for your
-            adventure.
-          </p>
-
-          {/* Search bar */}
-          <div className="mt-8 w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-3 flex flex-col md:flex-row gap-2">
-            <div className="flex-1 flex items-center gap-3 px-4 py-2">
-              <MapPin className="w-5 h-5 text-[#0ea472] flex-shrink-0" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Where do you want to go?"
-                className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent"
-              />
-            </div>
-            <div className="w-px bg-gray-200 hidden md:block my-2" />
-            <div className="flex items-center gap-3 px-4 py-2 md:w-36">
-              <Calendar className="w-5 h-5 text-gray-400 flex-shrink-0" />
-              <span className="text-sm text-gray-400">Any date</span>
-            </div>
-            <Btn
-              size="lg"
-              onClick={() => onNavigate("destination")}
-              className="rounded-xl whitespace-nowrap"
-            >
-              <Search className="w-4 h-4" /> Search
-            </Btn>
-          </div>
-          <div className="mt-5 flex flex-col sm:flex-row gap-4 justify-center">
-            <Btn
-              variant="secondary"
-              onClick={() => onNavigate("packages")}
-              className="bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30"
-            >
-              Explore Packages
-            </Btn>
-            <Btn
-              variant="secondary"
-              onClick={() => onNavigate("ai-trip-planner")}
-              className="bg-[#FFD700] text-gray-900 border-[#FFD700] hover:bg-[#FFC700] font-semibold"
-            >
-              AI Trip Planner <Sparkles className="w-4 h-4" />
-            </Btn>
-            <Btn
-              variant="secondary"
-              onClick={() => onNavigate("guide-landing")}
-              className="bg-[#0ea472] text-white border-[#0ea472] hover:bg-[#0d8f5f]"
-            >
-              Become a Guide <Award className="w-4 h-4" />
-            </Btn>
-          </div>
-        </div>
-      </section>
-
-      {/* Popular Destinations */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="flex items-end justify-between mb-8">
-          <div>
-            <p className="text-[#0ea472] text-sm font-semibold mb-1">Trending now</p>
-            <h2
-              className="text-3xl font-bold text-gray-900"
+        {/* Hero */}
+        <section className="relative min-h-[420px] flex items-center shrink-0">
+          <UnsplashImg
+            id="photo-1506905925346-21bda4d32df4"
+            w={800}
+            h={500}
+            alt="Mountain landscape"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/70" />
+          <div className="relative w-full flex flex-col items-center justify-center px-4 py-8 text-center">
+            <Badge variant="green">✦ 2,400+ Verified Guides</Badge>
+            <h1
+              className="mt-4 text-3xl font-bold text-white leading-tight max-w-sm"
               style={{ fontFamily: "Fraunces, serif" }}
             >
-              Popular Destinations
-            </h2>
-          </div>
-          <button className="text-sm text-[#0ea472] font-semibold hover:underline flex items-center gap-1">
-            View all <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          {DESTINATIONS.map((d, i) => (
-            <div
-              key={d.id}
-              onClick={() => onNavigate("destination")}
-              className={`relative rounded-2xl overflow-hidden cursor-pointer group ${i === 0 ? "col-span-2 h-64" : "h-44"}`}
-            >
-              <UnsplashImg
-                id={d.image}
-                w={600}
-                h={400}
-                alt={d.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-              <div className="absolute bottom-0 left-0 p-4">
-                <p className="text-white font-bold text-lg leading-tight">{d.name}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-white/70 text-xs">{d.guides} guides</span>
-                  <span className="text-white/50">·</span>
-                  <span className="text-amber-400 text-xs font-semibold">★ {d.rating}</span>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* AI Trip Planner Section */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="bg-gradient-to-br from-[#FFD700] to-[#FFC700] rounded-3xl p-12 text-gray-900">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="w-6 h-6" />
-              <span className="text-sm font-bold uppercase tracking-wide">POWERED BY AI</span>
-            </div>
-            <h2 className="text-4xl font-bold mb-4" style={{ fontFamily: "Fraunces, serif" }}>
-              Personalized Kerala Itineraries in Seconds
-            </h2>
-            <p className="text-lg mb-8 opacity-90">
-              Tell our AI your preferences, travel style, and budget. Get a custom-curated Kerala
-              adventure matched with the perfect guides, all tailored to your unique travel goals.
+              Travel like you already live there.
+            </h1>
+            <p className="mt-2 text-xs text-white/80 max-w-xs font-light">
+              Book a local guide or post your custom trip to receive competitive offers.
             </p>
-            <div className="grid grid-cols-3 gap-6 mb-8">
-              <div>
-                <p className="text-3xl font-bold mb-1">7</p>
-                <p className="text-sm font-semibold">Itinerary Templates</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold mb-1">100%</p>
-                <p className="text-sm font-semibold">Customizable</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold mb-1">24/7</p>
-                <p className="text-sm font-semibold">AI Assistance</p>
-              </div>
-            </div>
-            <Btn
-              size="lg"
-              onClick={() => onNavigate("ai-trip-planner")}
-              className="bg-gray-900 text-white hover:bg-gray-800"
-            >
-              Try AI Planner Now <ArrowRight className="w-4 h-4" />
-            </Btn>
-          </div>
-        </div>
-      </section>
 
-      {/* Featured Guides */}
-      <section className="bg-[#f5f7fa] py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex items-end justify-between mb-8">
+            {/* Search bar */}
+            <div className="mt-6 w-full max-w-xs bg-white rounded-xl shadow-lg p-2.5 flex flex-col gap-2">
+              <div className="flex items-center gap-2 px-2.5 py-1">
+                <MapPin className="w-4 h-4 text-[#0ea472] flex-shrink-0" />
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Where do you want to go?"
+                  className="flex-1 text-xs text-gray-800 placeholder-gray-400 outline-none bg-transparent"
+                />
+              </div>
+              <Btn
+                size="sm"
+                onClick={() => onNavigate("destination")}
+                className="w-full rounded-lg justify-center py-2"
+              >
+                <Search className="w-3.5 h-3.5" /> Search
+              </Btn>
+            </div>
+            <div className="mt-4 flex flex-col gap-2 w-full max-w-xs">
+              <div className="flex gap-2">
+                <Btn
+                  variant="secondary"
+                  onClick={() => onNavigate("packages")}
+                  className="flex-1 bg-white/20 text-white border-white/20 backdrop-blur-xs hover:bg-white/30 text-xs py-2 rounded-lg"
+                >
+                  Browse Packages
+                </Btn>
+                <Btn
+                  variant="secondary"
+                  onClick={() => onNavigate("ai-trip-planner")}
+                  className="flex-1 bg-[#FFD700] text-gray-900 border-[#FFD700] hover:bg-[#FFC700] text-xs py-2 rounded-lg"
+                >
+                  AI Planner <Sparkles className="w-3.5 h-3.5" />
+                </Btn>
+              </div>
+              <Btn
+                variant="secondary"
+                onClick={() => onNavigate("guide-landing")}
+                className="bg-[#0ea472] text-white border-[#0ea472] hover:bg-[#0d8f5f] text-xs py-2 rounded-lg justify-center"
+              >
+                Become a Guide <Award className="w-3.5 h-3.5" />
+              </Btn>
+            </div>
+          </div>
+        </section>
+
+        {/* Popular Destinations */}
+        <section className="px-4 py-8">
+          <div className="flex items-end justify-between mb-4">
             <div>
-              <p className="text-[#0ea472] text-sm font-semibold mb-1">Top rated</p>
+              <p className="text-[#0ea472] text-xs font-semibold mb-0.5">Trending now</p>
               <h2
-                className="text-3xl font-bold text-gray-900"
+                className="text-xl font-bold text-gray-900"
                 style={{ fontFamily: "Fraunces, serif" }}
               >
-                Featured Guides
+                Popular Destinations
               </h2>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-            {guides.map((g) => (
+          <div className="grid grid-cols-2 gap-3">
+            {DESTINATIONS.slice(0, 4).map((d) => (
+              <div
+                key={d.id}
+                onClick={() => onNavigate("destination")}
+                className="relative rounded-xl overflow-hidden cursor-pointer group h-28"
+              >
+                <UnsplashImg
+                  id={d.image}
+                  w={300}
+                  h={200}
+                  alt={d.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                <div className="absolute bottom-0 left-0 p-2.5">
+                  <p className="text-white font-bold text-sm leading-tight">{d.name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="text-white/70 text-[10px]">{d.guides} guides</span>
+                    <span className="text-white/50 text-[10px]">·</span>
+                    <span className="text-amber-400 text-[10px] font-semibold">★ {d.rating}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* AI Trip Planner Section */}
+        <section className="px-4 py-4">
+          <div className="bg-gradient-to-br from-[#FFD700] to-[#FFC700] rounded-2xl p-5 text-gray-900">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Sparkles className="w-4 h-4" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">POWERED BY AI</span>
+            </div>
+            <h2 className="text-lg font-bold mb-1.5 leading-tight" style={{ fontFamily: "Fraunces, serif" }}>
+              Personalized Kerala Itineraries in Seconds
+            </h2>
+            <p className="text-xs mb-4 opacity-90 leading-relaxed">
+              Tell our AI your preferences and get a custom-curated Kerala adventure matched with the perfect guides.
+            </p>
+            <div className="grid grid-cols-3 gap-2 mb-4 text-center">
+              <div className="bg-white/30 rounded-lg p-1.5">
+                <p className="text-sm font-bold">7</p>
+                <p className="text-[9px] font-medium leading-tight">Templates</p>
+              </div>
+              <div className="bg-white/30 rounded-lg p-1.5">
+                <p className="text-sm font-bold">100%</p>
+                <p className="text-[9px] font-medium leading-tight">Custom</p>
+              </div>
+              <div className="bg-white/30 rounded-lg p-1.5">
+                <p className="text-sm font-bold">24/7</p>
+                <p className="text-[9px] font-medium leading-tight">Support</p>
+              </div>
+            </div>
+            <Btn
+              size="sm"
+              onClick={() => onNavigate("ai-trip-planner")}
+              className="w-full bg-gray-900 text-white hover:bg-gray-800 text-xs py-2 justify-center"
+            >
+              Try AI Planner <ArrowRight className="w-3.5 h-3.5" />
+            </Btn>
+          </div>
+        </section>
+
+        {/* Featured Guides */}
+        <section className="bg-[#f5f7fa] py-8 px-4">
+          <div className="mb-4">
+            <p className="text-[#0ea472] text-xs font-semibold mb-0.5">Top rated</p>
+            <h2
+              className="text-xl font-bold text-gray-900"
+              style={{ fontFamily: "Fraunces, serif" }}
+            >
+              Featured Guides
+            </h2>
+          </div>
+          <div className="flex flex-col gap-4">
+            {guides.slice(0, 3).map((g) => (
               <Card
                 key={g.id}
                 onClick={() => onNavigate("package-detail")}
-                className="overflow-hidden"
+                className="overflow-hidden flex"
               >
-                <div className="relative h-44">
+                <div className="relative w-28 h-28 flex-shrink-0">
                   <UnsplashImg
                     id={g.images[0]}
-                    w={400}
-                    h={300}
+                    w={200}
+                    h={200}
                     alt={g.name}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-3 right-3">
+                  <div className="absolute top-1.5 left-1.5">
                     {g.verified && (
                       <Badge variant="green">
-                        <Shield className="w-3 h-3" /> Verified
+                        <Shield className="w-2.5 h-2.5" />
                       </Badge>
                     )}
                   </div>
                 </div>
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
-                    <Avatar src={g.avatar} size="sm" alt={g.name} />
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{g.name}</p>
-                      <p className="text-xs text-gray-500 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {g.location}
-                      </p>
+                <div className="p-3 flex-1 flex flex-col justify-between min-w-0">
+                  <div>
+                    <div className="flex items-start gap-2 justify-between">
+                      <p className="font-semibold text-xs text-gray-900 truncate">{g.name}</p>
+                      <span className="text-xs font-bold text-gray-900 flex-shrink-0">₹{g.price}</span>
                     </div>
+                    <p className="text-[10px] text-gray-500 truncate flex items-center gap-0.5 mt-0.5">
+                      <MapPin className="w-2.5 h-2.5" />
+                      {g.location}
+                    </p>
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <StarRating rating={g.rating} />
-                      <span className="text-xs text-gray-500 ml-1">
-                        {g.rating} ({g.reviews})
-                      </span>
-                    </div>
-                    <span className="text-sm font-bold text-gray-900">
-                      ₹{g.price}
-                      <span className="text-gray-400 font-normal text-xs">/day</span>
-                    </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500">★ {g.rating} ({g.reviews})</span>
+                    <span className="text-[9px] text-[#0ea472] font-semibold">View Details</span>
                   </div>
                 </div>
               </Card>
             ))}
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* How it works */}
-      <section className="max-w-6xl mx-auto px-6 py-16">
-        <div className="text-center mb-12">
-          <p className="text-[#0ea472] text-sm font-semibold mb-1">Simple process</p>
-          <h2
-            className="text-3xl font-bold text-gray-900"
-            style={{ fontFamily: "Fraunces, serif" }}
-          >
-            How KuTo works
-          </h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: Search,
-              step: "01",
-              title: "Search or post",
-              desc: "Browse guide packages or post your custom trip with your budget and preferences.",
-            },
-            {
-              icon: MessageCircle,
-              step: "02",
-              title: "Receive offers",
-              desc: "Nearby guides see your request and send personalized offers or accept your terms.",
-            },
-            {
-              icon: Award,
-              step: "03",
-              title: "Explore together",
-              desc: "Choose your guide, chat, confirm details, and set off on an unforgettable adventure.",
-            },
-          ].map((item) => (
-            <div key={item.step} className="text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center mx-auto mb-5">
-                <item.icon className="w-7 h-7 text-[#0ea472]" />
-              </div>
-              <p className="text-[#0ea472] text-xs font-bold mb-2">{item.step}</p>
-              <h3 className="text-lg font-bold text-gray-900 mb-2">{item.title}</h3>
-              <p className="text-gray-500 text-sm leading-relaxed">{item.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA banner */}
-      <section className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="relative rounded-3xl overflow-hidden">
-          <UnsplashImg
-            id="photo-1488085061387-422e29b40080"
-            w={1200}
-            h={400}
-            alt="Travel"
-            className="w-full h-56 object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#0ea472]/90 to-[#1a7fd4]/80" />
-          <div className="absolute inset-0 flex items-center justify-between px-10">
-            <div>
-              <h3
-                className="text-2xl font-bold text-white mb-2"
-                style={{ fontFamily: "Fraunces, serif" }}
-              >
-                Ready to explore differently?
-              </h3>
-              <p className="text-white/80 text-sm">
-                Post your trip for free. No booking fees until you confirm.
-              </p>
-            </div>
-            <Btn
-              size="lg"
-              variant="outline"
-              onClick={() => onNavigate("custom-trip")}
-              className="whitespace-nowrap bg-white text-[#0ea472] hover:bg-gray-50"
+        {/* How it works */}
+        <section className="px-4 py-8">
+          <div className="text-center mb-6">
+            <p className="text-[#0ea472] text-xs font-semibold mb-0.5">Simple process</p>
+            <h2
+              className="text-xl font-bold text-gray-900"
+              style={{ fontFamily: "Fraunces, serif" }}
             >
-              Create Custom Trip <ArrowRight className="w-4 h-4" />
-            </Btn>
+              How KuTo works
+            </h2>
           </div>
-        </div>
-      </section>
+          <div className="flex flex-col gap-6">
+            {[
+              {
+                icon: Search,
+                step: "01",
+                title: "Search or post",
+                desc: "Browse guide packages or post your custom trip details.",
+              },
+              {
+                icon: MessageCircle,
+                step: "02",
+                title: "Receive offers",
+                desc: "Guides compete to offer you the best price and route.",
+              },
+              {
+                icon: Award,
+                step: "03",
+                title: "Explore together",
+                desc: "Choose, chat, and start your adventure.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="flex gap-4">
+                <div className="w-10 h-10 rounded-xl bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-5 h-5 text-[#0ea472]" />
+                </div>
+                <div>
+                  <p className="text-[#0ea472] text-[10px] font-bold">{item.step}</p>
+                  <h3 className="text-sm font-bold text-gray-900">{item.title}</h3>
+                  <p className="text-gray-500 text-xs mt-0.5 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* CTA banner */}
+        <section className="px-4 pb-8">
+          <div className="relative rounded-2xl overflow-hidden h-44">
+            <UnsplashImg
+              id="photo-1488085061387-422e29b40080"
+              w={600}
+              h={300}
+              alt="Travel"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#0ea472]/80 to-[#1a7fd4]/80" />
+            <div className="absolute inset-0 flex flex-col justify-center items-center text-center p-4 gap-3">
+              <div>
+                <h3
+                  className="text-base font-bold text-white mb-1 leading-tight"
+                  style={{ fontFamily: "Fraunces, serif" }}
+                >
+                  Ready to explore differently?
+                </h3>
+                <p className="text-white/80 text-[10px]">
+                  Post your trip for free. Connect with verified guides.
+                </p>
+              </div>
+              <Btn
+                size="sm"
+                variant="outline"
+                onClick={() => onNavigate("custom-trip")}
+                className="bg-white text-[#0ea472] hover:bg-gray-50 text-xs py-2"
+              >
+                Create Custom Trip <ArrowRight className="w-3.5 h-3.5" />
+              </Btn>
+            </div>
+          </div>
+        </section>
+      </div>
 
       <BottomNav active="home" onNavigate={onNavigate} />
     </div>
@@ -1495,7 +1471,7 @@ function LandingScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void
 
 // ─── Screen 2: Destination ─────────────────────────────────────────────────────
 
-function DestinationScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void; guides: any[] }) {
+function DestinationScreen({ onNavigate, guides }: { onNavigate: (s: Screen, data?: any) => void; guides: any[] }) {
   const [tab, setTab] = useState<"packages" | "custom">("packages");
 
   return (
@@ -1631,7 +1607,7 @@ function DestinationScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => 
 
 // ─── Screen 3: Guide Packages ──────────────────────────────────────────────────
 
-function PackagesScreen({ onNavigate, guides }: { onNavigate: (s: Screen) => void; guides: any[] }) {
+function PackagesScreen({ onNavigate, guides }: { onNavigate: (s: Screen, data?: any) => void; guides: any[] }) {
   return (
     <div className="min-h-screen bg-[#f5f7fa]">
       <TopNav onNavigate={onNavigate} title="Guide Packages" showBack backScreen="destination" />
@@ -1938,8 +1914,11 @@ const WIZARD_STEPS = [
   "Review",
 ];
 
-function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
   const [form, setForm] = useState({
     destination: "Kochi, Kerala",
     startDate: "2025-07-14",
@@ -1962,6 +1941,51 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
     "Luxury & Wellness",
     "Family Friendly",
   ];
+
+  const handleSubmit = async () => {
+    if (!user) {
+      onNavigate("login");
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const start = new Date(form.startDate);
+      const end = new Date(form.endDate);
+      const duration = Math.max(1, Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))) || 1;
+
+      const { data, error } = await supabase
+        .from("bookings")
+        .insert({
+          traveler_id: user.id,
+          guide_id: null,
+          travel_date: form.flexibleDates ? null : form.startDate,
+          duration_days: duration,
+          destination: form.destination,
+          group_size: form.travelers,
+          special_notes: `Style: ${form.style}. Requirements: ${form.requirements}. Notes: ${form.notes}`,
+          total_amount: form.budget,
+          status: "pending"
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error("Booking submission DB error:", error);
+        setSubmitError(error.message || "Failed to submit request.");
+        setSubmitting(false);
+        return;
+      }
+
+      onNavigate("request-submitted", { bookingId: data.id, type: "custom-trip" });
+    } catch (err: any) {
+      console.error("Booking submission unexpected error:", err);
+      setSubmitError("An unexpected error occurred.");
+      setSubmitting(false);
+    }
+  };
 
   const stepContent = () => {
     switch (step) {
@@ -2186,9 +2210,9 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 shrink-0">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           <button
             onClick={() => (step === 0 ? onNavigate("destination") : setStep((s) => s - 1))}
@@ -2215,8 +2239,8 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
         </div>
       </div>
 
-      <div className="flex-1 max-w-lg mx-auto w-full px-4 py-8">
-        <div className="mb-8">
+      <div className="flex-1 overflow-y-auto px-4 py-6">
+        <div className="mb-6">
           <Badge variant="green">{WIZARD_STEPS[step]}</Badge>
           <h2
             className="mt-3 text-2xl font-bold text-gray-900"
@@ -2239,15 +2263,20 @@ function CustomTripScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
         {stepContent()}
       </div>
 
-      <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-4">
+      <div className="sticky bottom-0 bg-white border-t border-gray-100 px-4 py-4 shrink-0">
         <div className="max-w-lg mx-auto">
+          {submitError && (
+            <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-700 text-xs font-semibold">
+              {submitError}
+            </div>
+          )}
           {step < WIZARD_STEPS.length - 1 ? (
-            <Btn size="lg" className="w-full" onClick={() => setStep((s) => s + 1)}>
+            <Btn size="lg" className="w-full justify-center" onClick={() => setStep((s) => s + 1)}>
               Continue <ArrowRight className="w-4 h-4" />
             </Btn>
           ) : (
-            <Btn size="lg" className="w-full" onClick={() => onNavigate("request-submitted")}>
-              Submit Trip Request <Send className="w-4 h-4" />
+            <Btn size="lg" className="w-full justify-center" onClick={handleSubmit} disabled={submitting}>
+              {submitting ? "Submitting request..." : "Submit Trip Request"} <Send className="w-4 h-4" />
             </Btn>
           )}
         </div>
@@ -2375,7 +2404,7 @@ function RequestSubmittedScreen({
 
       <div className="mt-8 flex flex-col gap-3 w-full max-w-xs">
         {isBooking ? (
-          <Btn size="lg" className="w-full" onClick={() => onNavigate("chat", { guideId: 1 })}>
+          <Btn size="lg" className="w-full" onClick={() => onNavigate("chat")}>
             Chat with Guide <MessageCircle className="w-4 h-4" />
           </Btn>
         ) : (
@@ -2396,22 +2425,52 @@ function RequestSubmittedScreen({
   );
 }
 
-// ─── Screen 7: Traveler Dashboard ─────────────────────────────────────────────
-
-function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
   const { user, logout } = useAuth();
+  const [tab, setTab] = useState<"trips" | "requests">("requests");
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchBookings = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, offers(*)")
+        .eq("traveler_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching traveler bookings:", error);
+      } else {
+        setBookings(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching bookings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, [user]);
+
+  const activeTrips = bookings.filter((b) => b.guide_id !== null);
+  const customRequests = bookings.filter((b) => b.guide_id === null);
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#f5f7fa] relative">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shrink-0">
         <div className="max-w-lg mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
             KuTo
           </h1>
           <button
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               onNavigate("landing");
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 rounded-full text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
@@ -2421,171 +2480,327 @@ function TravelerDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => vo
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-          <div className="text-center mb-6">
-            <div className="w-24 h-24 bg-[#f0faf6] border-4 border-[#0ea472] rounded-full flex items-center justify-center mx-auto mb-4 text-[#0ea472] text-3xl font-bold">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto pb-20 p-4">
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-[#f0faf6] border-2 border-[#0ea472] rounded-full flex items-center justify-center text-[#0ea472] text-lg font-bold">
               {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "T"}
             </div>
-            <h2
-              className="text-2xl font-bold text-gray-900"
-              style={{ fontFamily: "Fraunces, serif" }}
-            >
-              {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Traveler User"}
-            </h2>
-            <span className="inline-block mt-2 px-3 py-1 bg-[#f0faf6] text-[#0ea472] text-xs font-semibold rounded-full border border-[#c6eadc]">
-              Traveler Profile
-            </span>
-          </div>
-
-          <div className="space-y-4 border-t border-gray-100 pt-6">
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Email Address
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">{user?.email}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Phone Number
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">
-                {user?.phone || "Not provided"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Account Type
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">
-                Traveler Account (Local Database)
-              </p>
+              <h2 className="text-sm font-bold text-gray-900">
+                {user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Traveler User"}
+              </h2>
+              <p className="text-[10px] text-gray-500">{user?.email}</p>
             </div>
           </div>
         </div>
+
+        {/* Tab Selector */}
+        <div className="bg-white rounded-xl border border-gray-100 p-1 flex mb-4">
+          <button
+            onClick={() => setTab("requests")}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tab === "requests" ? "bg-[#0ea472] text-white" : "text-gray-500 hover:text-gray-700 bg-transparent"}`}
+          >
+            Custom Requests ({customRequests.length})
+          </button>
+          <button
+            onClick={() => setTab("trips")}
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${tab === "trips" ? "bg-[#0ea472] text-white" : "text-gray-500 hover:text-gray-700 bg-transparent"}`}
+          >
+            Confirmed Trips ({activeTrips.length})
+          </button>
+        </div>
+
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-4 border-[#0ea472] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-xs font-medium">Fetching details...</p>
+          </div>
+        ) : tab === "requests" ? (
+          // Requests Tab
+          customRequests.length === 0 ? (
+            <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-xs">
+              <p className="text-gray-500 text-xs leading-relaxed">No pending custom trip requests found.</p>
+              <Btn
+                size="sm"
+                onClick={() => onNavigate("custom-trip")}
+                className="mt-3 bg-[#0ea472] text-white"
+              >
+                Create Custom Trip
+              </Btn>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {customRequests.map((req) => (
+                <Card key={req.id} className="p-4 bg-white border border-gray-100 rounded-xl">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-sm text-gray-900">{req.destination}</h3>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {req.travel_date ? new Date(req.travel_date).toLocaleDateString() : "Flexible dates"} · {req.duration_days} days
+                      </p>
+                    </div>
+                    <Badge variant="blue">₹{req.total_amount}</Badge>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-2.5 line-clamp-2 italic bg-slate-50 p-2 rounded-lg">
+                    {req.special_notes}
+                  </p>
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-[10px] font-semibold text-gray-500">
+                      {req.offers ? req.offers.length : 0} offers received
+                    </span>
+                    {(req.offers && req.offers.length > 0) && (
+                      <button
+                        onClick={() => onNavigate("offers", req)}
+                        className="px-3 py-1.5 bg-[#0ea472] text-white text-[10px] font-bold rounded-lg hover:bg-[#0c9266] transition-colors"
+                      >
+                        View Offers
+                      </button>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )
+        ) : (
+          // Trips Tab
+          activeTrips.length === 0 ? (
+            <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-xs">
+              <p className="text-gray-500 text-xs">No confirmed trips yet.</p>
+              <Btn
+                size="sm"
+                onClick={() => onNavigate("destination")}
+                className="mt-3 bg-[#0ea472] text-white"
+              >
+                Explore Destinations
+              </Btn>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {activeTrips.map((trip) => (
+                <Card key={trip.id} className="p-4 bg-white border border-gray-100 rounded-xl">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-sm text-gray-900">{trip.destination}</h3>
+                      <p className="text-[10px] text-gray-400 mt-0.5">
+                        {trip.travel_date ? new Date(trip.travel_date).toLocaleDateString() : "Flexible dates"} · {trip.duration_days} days
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold text-emerald-600 px-2 py-0.5 bg-emerald-50 rounded-full border border-emerald-100">
+                      Confirmed
+                    </span>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                    <span className="text-[10px] text-gray-500">
+                      Total Paid: <span className="font-bold text-gray-900">₹{trip.total_amount}</span>
+                    </span>
+                    <button
+                      onClick={() => onNavigate("chat", { bookingId: trip.id, guideId: trip.guide_id, partnerName: "Guide" })}
+                      className="px-3.5 py-1.5 border border-[#1a7fd4] text-[#1a7fd4] hover:bg-blue-50 text-[10px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                    >
+                      <MessageCircle className="w-3 h-3" /> Chat with Guide
+                    </button>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )
+        )}
       </div>
+      <BottomNav active="trips" onNavigate={onNavigate} />
     </div>
   );
 }
 
-// ─── Screen 8: Offers ─────────────────────────────────────────────────────────
+function OffersScreen({ onNavigate, booking }: { onNavigate: (s: Screen, data?: any) => void; booking: any }) {
+  const [offersList, setOffersList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-function OffersScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
-  const [dismissed, setDismissed] = useState<number[]>([]);
+  const fetchOffers = async () => {
+    if (!booking) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("offers")
+        .select("*, guides(*)")
+        .eq("booking_id", booking.id);
+
+      if (error) {
+        console.error("Error fetching offers:", error);
+      } else {
+        setOffersList(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching offers:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOffers();
+  }, [booking]);
+
+  const handleAccept = async (offer: any) => {
+    try {
+      // 1. Confirm booking with guide
+      const { error: bookingError } = await supabase
+        .from("bookings")
+        .update({
+          guide_id: offer.guide_id,
+          total_amount: offer.price,
+          status: "confirmed"
+        })
+        .eq("id", booking.id);
+
+      if (bookingError) throw bookingError;
+
+      // 2. Mark this offer as accepted
+      await supabase.from("offers").update({ status: "accepted" }).eq("id", offer.id);
+
+      // 3. Mark other offers for this booking as rejected
+      await supabase.from("offers").update({ status: "rejected" }).eq("booking_id", booking.id).neq("id", offer.id);
+
+      onNavigate("request-submitted", {
+        type: "booking",
+        destination: booking.destination,
+        budget: `₹${offer.price}`,
+        guideName: `${offer.guides?.first_name || ""} ${offer.guides?.last_name || ""}`.trim() || "Guide"
+      });
+    } catch (err) {
+      console.error("Error accepting offer:", err);
+    }
+  };
+
+  const handleDecline = async (offerId: string) => {
+    try {
+      await supabase.from("offers").update({ status: "rejected" }).eq("id", offerId);
+      // Refresh list
+      fetchOffers();
+    } catch (err) {
+      console.error("Error declining offer:", err);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#f5f7fa] relative">
       <TopNav
         onNavigate={onNavigate}
         title="Offers Received"
         showBack
         backScreen="traveler-dashboard"
       />
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
+      <div className="flex-1 overflow-y-auto pb-20 p-4">
         {/* Request recap */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-6 flex items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center">
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center flex-shrink-0">
             <MapPin className="w-5 h-5 text-[#0ea472]" />
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Kochi, Kerala · Jul 14–16</p>
-            <p className="text-xs text-gray-500">
-              Budget ₹3,000–4,500 · 2 travelers · Cultural & Historical
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">
+              {booking?.destination}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              {booking?.travel_date ? new Date(booking.travel_date).toLocaleDateString() : "Flexible dates"} · {booking?.duration_days} days
+            </p>
+            <p className="text-[10px] text-gray-400 mt-0.5">
+              Target Budget: ₹{booking?.total_amount}
             </p>
           </div>
           <Badge variant="green">
-            {OFFERS.filter((o) => !dismissed.includes(o.id)).length} offers
+            {offersList.filter(o => o.status === "pending").length} new
           </Badge>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {OFFERS.filter((o) => !dismissed.includes(o.id)).map((offer) => (
-            <Card key={offer.id} className="overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar src={offer.guide.avatar} size="lg" alt={offer.guide.name} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-semibold text-gray-900">{offer.guide.name}</p>
-                      {"verified" in offer.guide && offer.guide.verified && (
-                        <Shield className="w-4 h-4 text-[#0ea472]" />
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-0.5">{offer.guide.specialty}</p>
-                    <div className="flex items-center gap-1.5 mt-1">
-                      <StarRating rating={offer.guide.rating} />
-                      <span className="text-xs text-gray-500">
-                        {offer.guide.rating} ({offer.guide.reviews})
-                      </span>
-                    </div>
-                  </div>
-                  <div className="text-right flex-shrink-0">
-                    <p className="text-xl font-bold text-gray-900">₹{offer.price}</p>
-                    <p className="text-xs text-gray-400">total offer</p>
-                  </div>
-                </div>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-4 border-[#0ea472] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-xs font-medium">Loading offers...</p>
+          </div>
+        ) : offersList.filter(o => o.status === "pending").length === 0 ? (
+          <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-xs">
+            <p className="text-gray-500 text-xs">Waiting for guides to send counter-offers...</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {offersList.filter(o => o.status === "pending").map((offer) => {
+              const guideName = `${offer.guides?.first_name || ""} ${offer.guides?.last_name || ""}`.trim() || "Local Guide";
+              const isWithinBudget = offer.price <= (booking?.total_amount || 0);
 
-                {/* Offer price indicator */}
-                <div className="mt-3 bg-[#f5f7fa] rounded-xl p-3">
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-gray-500">Your budget</span>
-                    <span className="text-gray-500">Offer price</span>
+              return (
+                <Card key={offer.id} className="overflow-hidden bg-white border border-gray-100">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar src="photo-1534528741775-53994a69daeb" size="lg" alt={guideName} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="font-semibold text-gray-900 text-sm">{guideName}</p>
+                          <Shield className="w-4 h-4 text-[#0ea472] flex-shrink-0" />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{offer.guides?.specializations?.[0] || "Custom Tours"}</p>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <StarRating rating={4.8} />
+                          <span className="text-[10px] text-gray-500">4.8 (4 reviews)</span>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-lg font-bold text-gray-900">₹{offer.price}</p>
+                        <p className="text-[10px] text-gray-400">total offer</p>
+                      </div>
+                    </div>
+
+                    {/* Offer price indicator */}
+                    <div className="mt-3 bg-[#f5f7fa] rounded-xl p-3">
+                      <div className="flex justify-between text-[10px] mb-1">
+                        <span className="text-gray-500">Your budget</span>
+                        <span className="text-gray-500">Offer price</span>
+                      </div>
+                      <div className="relative h-1 bg-gray-200 rounded-full">
+                        <div
+                          className={`absolute top-0 h-full rounded-full ${isWithinBudget ? "bg-[#0ea472]" : "bg-amber-400"}`}
+                          style={{ width: `${Math.min(100, (offer.price / (booking?.total_amount || 5000)) * 100)}%` }}
+                        />
+                      </div>
+                      <div className="flex justify-between text-[10px] mt-1">
+                        <span className="text-gray-400">₹{booking?.total_amount}</span>
+                        <span className={`font-semibold ${isWithinBudget ? "text-[#0ea472]" : "text-amber-600"}`}>
+                          ₹{offer.price} {isWithinBudget ? "✓ within budget" : "↑ above budget"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="mt-3 text-xs text-gray-600 leading-relaxed border-l-2 border-[#0ea472]/30 pl-2.5">
+                      "{offer.message}"
+                    </p>
                   </div>
-                  <div className="relative h-1.5 bg-gray-200 rounded-full">
-                    <div className="absolute left-0 top-0 h-full bg-gray-300 rounded-full w-3/5" />
-                    <div
-                      className={`absolute top-0 h-full rounded-full ${offer.price <= 4500 ? "bg-[#0ea472]" : "bg-amber-400"}`}
-                      style={{ width: `${Math.min(100, (offer.price / 5000) * 100)}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-between text-xs mt-1">
-                    <span className="text-gray-400">{offer.originalBudget}</span>
-                    <span
-                      className={`font-semibold ${offer.price <= 4500 ? "text-[#0ea472]" : "text-amber-600"}`}
+
+                  <div className="px-4 pb-4 flex gap-2">
+                    <button
+                      onClick={() => handleDecline(offer.id)}
+                      className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50 flex items-center justify-center gap-1 transition-colors"
                     >
-                      ₹{offer.price} {offer.price > 4500 ? "↑ above" : "✓ within budget"}
-                    </span>
+                      <X className="w-3.5 h-3.5" /> Decline
+                    </button>
+                    <button
+                      onClick={() => onNavigate("chat", { bookingId: booking.id, guideId: offer.guide_id, partnerName: guideName })}
+                      className="flex-1 py-2.5 rounded-xl border border-[#1a7fd4] text-xs font-semibold text-[#1a7fd4] hover:bg-blue-50 flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" /> Chat
+                    </button>
+                    <button
+                      onClick={() => handleAccept(offer)}
+                      className="flex-1 py-2.5 rounded-xl bg-[#0ea472] text-xs font-semibold text-white hover:bg-[#0c9266] flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Accept
+                    </button>
                   </div>
-                </div>
-
-                <p className="mt-3 text-sm text-gray-600 leading-relaxed border-l-2 border-[#0ea472]/30 pl-3">
-                  "{offer.message}"
-                </p>
-              </div>
-
-              <div className="px-4 pb-4 flex gap-2">
-                <button
-                  onClick={() => setDismissed((d) => [...d, offer.id])}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-500 hover:bg-gray-50 flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <X className="w-4 h-4" /> Decline
-                </button>
-                <button
-                  onClick={() => onNavigate("chat")}
-                  className="flex-1 py-2.5 rounded-xl border border-[#1a7fd4] text-sm font-semibold text-[#1a7fd4] hover:bg-blue-50 flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <MessageCircle className="w-4 h-4" /> Chat
-                </button>
-                <button
-                  onClick={() => onNavigate("request-submitted")}
-                  className="flex-1 py-2.5 rounded-xl bg-[#0ea472] text-sm font-semibold text-white hover:bg-[#0c9266] flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <Check className="w-4 h-4" /> Accept
-                </button>
-              </div>
-            </Card>
-          ))}
-
-          {dismissed.length === OFFERS.length && (
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-sm">No more offers right now.</p>
-              <Btn variant="outline" size="sm" className="mt-3" onClick={() => setDismissed([])}>
-                Reset
-              </Btn>
-            </div>
-          )}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
       <BottomNav active="trips" onNavigate={onNavigate} />
     </div>
@@ -2594,102 +2809,184 @@ function OffersScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 // ─── Screen 9: Chat ───────────────────────────────────────────────────────────
 
-function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
-  const [messages, setMessages] = useState(CHAT_MESSAGES);
+function ChatScreen({ onNavigate, params }: { onNavigate: (s: Screen, data?: any) => void; params: any }) {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
+  const [bookingDetails, setBookingDetails] = useState<any>(null);
 
-  const send = () => {
-    if (!input.trim()) return;
-    setMessages((m) => [...m, { id: m.length + 1, sender: "traveler", text: input, time: "Now" }]);
+  const bookingId = params?.bookingId;
+  const partnerName = params?.partnerName || "Chat Partner";
+  const backScreen = user?.role === "guide" ? "guide-dashboard" : "traveler-dashboard";
+
+  const fetchMessages = async () => {
+    if (!bookingId) return;
+    try {
+      const { data, error } = await supabase
+        .from("messages")
+        .select("*")
+        .eq("booking_id", bookingId)
+        .order("created_at", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching messages:", error);
+      } else {
+        setMessages(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected chat fetch error:", err);
+    }
+  };
+
+  const fetchBookingDetails = async () => {
+    if (!bookingId) return;
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+      if (error) {
+        console.error("Error fetching booking details for context:", error);
+      } else {
+        setBookingDetails(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMessages();
+    fetchBookingDetails();
+
+    if (!bookingId) return;
+
+    const channel = supabase
+      .channel(`room:${bookingId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `booking_id=eq.${bookingId}`
+        },
+        (payload) => {
+          setMessages((prev) => {
+            if (prev.some((m) => m.id === payload.new.id)) return prev;
+            return [...prev, payload.new];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [bookingId]);
+
+  const send = async () => {
+    if (!input.trim() || !user || !bookingId) return;
+    const textToSend = input;
     setInput("");
+
+    try {
+      const { error } = await supabase
+        .from("messages")
+        .insert({
+          booking_id: bookingId,
+          sender_id: user.id,
+          text: textToSend
+        });
+
+      if (error) {
+        console.error("Error sending message:", error);
+      }
+    } catch (err) {
+      console.error("Unexpected error sending msg:", err);
+    }
   };
 
   return (
-    <div className="h-screen flex flex-col bg-white">
+    <div className="flex-1 flex flex-col min-h-0 bg-white">
       {/* Chat header */}
-      <div className="sticky top-0 z-40 bg-white border-b border-gray-100">
+      <div className="sticky top-0 z-40 bg-white border-b border-gray-100 shrink-0">
         <div className="max-w-lg mx-auto px-4 h-16 flex items-center gap-3">
           <button
-            onClick={() => onNavigate("offers")}
+            onClick={() => onNavigate(backScreen)}
             className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100"
           >
             <ChevronLeft className="w-5 h-5 text-gray-700" />
           </button>
-          <Avatar src="photo-1507003211169-0a1dd7228f2d" size="md" alt="Rajesh" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Rajesh Nair</p>
+          <Avatar src="photo-1507003211169-0a1dd7228f2d" size="md" alt={partnerName} />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-900 truncate">{partnerName}</p>
             <div className="flex items-center gap-1">
               <div className="w-2 h-2 bg-[#0ea472] rounded-full" />
-              <span className="text-xs text-gray-500">Online · Kochi, Kerala</span>
+              <span className="text-[10px] text-gray-500">Active conversation</span>
             </div>
-          </div>
-          <div className="flex gap-1">
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
-              <Phone className="w-4 h-4 text-gray-600" />
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
-              <Video className="w-4 h-4 text-gray-600" />
-            </button>
-            <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
-              <MoreHorizontal className="w-4 h-4 text-gray-600" />
-            </button>
           </div>
         </div>
       </div>
 
       {/* Trip context bar */}
-      <div className="bg-[#f0faf6] border-b border-[#c6eadc] px-4 py-2.5">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
-          <div className="w-6 h-6 rounded-md bg-[#0ea472] flex items-center justify-center flex-shrink-0">
-            <MapPin className="w-3.5 h-3.5 text-white" />
+      {bookingDetails && (
+        <div className="bg-[#f0faf6] border-b border-[#c6eadc] px-4 py-2.5 shrink-0">
+          <div className="max-w-lg mx-auto flex items-center gap-3">
+            <div className="w-6 h-6 rounded-md bg-[#0ea472] flex items-center justify-center flex-shrink-0">
+              <MapPin className="w-3.5 h-3.5 text-white" />
+            </div>
+            <span className="text-[10px] text-gray-600 flex-1 truncate">
+              {bookingDetails.destination} · {bookingDetails.duration_days} days · ₹{bookingDetails.total_amount}
+            </span>
+            {user?.role === "traveler" && bookingDetails.status === "pending" && (
+              <Btn size="sm" onClick={() => onNavigate("offers", bookingDetails)}>
+                View Offers
+              </Btn>
+            )}
           </div>
-          <span className="text-xs text-gray-600 flex-1">
-            Kochi Cultural Tour · Jul 14–15 ·{" "}
-            <span className="font-semibold text-[#0ea472]">Offer: ₹3,400</span>
-          </span>
-          <Btn size="sm" onClick={() => onNavigate("request-submitted")}>
-            Confirm Booking
-          </Btn>
         </div>
-      </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3 max-w-lg mx-auto w-full">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex gap-2.5 ${msg.sender === "traveler" ? "flex-row-reverse" : ""}`}
-          >
-            {msg.sender === "guide" && <Avatar src={msg.avatar!} size="sm" alt={msg.name!} />}
+        {messages.map((msg) => {
+          const isMe = msg.sender_id === user?.id;
+          return (
             <div
-              className={`max-w-[75%] ${msg.sender === "traveler" ? "items-end" : "items-start"} flex flex-col gap-1`}
+              key={msg.id}
+              className={`flex gap-2.5 ${isMe ? "flex-row-reverse" : ""}`}
             >
+              {!isMe && <Avatar src="photo-1507003211169-0a1dd7228f2d" size="sm" alt={partnerName} />}
               <div
-                className={`px-4 py-3 rounded-2xl text-sm leading-relaxed ${msg.sender === "traveler" ? "bg-[#0ea472] text-white rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"}`}
+                className={`max-w-[75%] ${isMe ? "items-end" : "items-start"} flex flex-col gap-1`}
               >
-                {msg.text}
+                <div
+                  className={`px-4 py-2.5 rounded-2xl text-xs leading-relaxed ${isMe ? "bg-[#0ea472] text-white rounded-tr-sm" : "bg-gray-100 text-gray-800 rounded-tl-sm"}`}
+                >
+                  {msg.text}
+                </div>
+                <span className="text-[9px] text-gray-400">
+                  {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                </span>
               </div>
-              <span className="text-[10px] text-gray-400">{msg.time}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-100 bg-white px-4 py-3 safe-area-pb">
+      <div className="border-t border-gray-100 bg-white px-4 py-3 safe-area-pb shrink-0">
         <div className="max-w-lg mx-auto flex items-center gap-2">
-          <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-100">
-            <Plus className="w-5 h-5 text-gray-500" />
-          </button>
           <div className="flex-1 flex items-center gap-2 bg-[#f5f7fa] rounded-full px-4 py-2">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && send()}
-              placeholder="Message Rajesh..."
-              className="flex-1 text-sm text-gray-800 placeholder-gray-400 outline-none bg-transparent"
+              placeholder={`Message ${partnerName}...`}
+              className="flex-1 text-xs text-gray-800 placeholder-gray-400 outline-none bg-transparent"
             />
-            <Mic className="w-4 h-4 text-gray-400" />
           </div>
           <button
             onClick={send}
@@ -2705,20 +3002,48 @@ function ChatScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
 
 // ─── Screen 10: Guide Dashboard ───────────────────────────────────────────────
 
-function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
   const { user, logout } = useAuth();
+  const [assignedBookings, setAssignedBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchAssignedBookings = async () => {
+    if (!user) return;
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, users!bookings_traveler_id_fkey(*)") // Join traveler details
+        .eq("guide_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching guide bookings:", error);
+      } else {
+        setAssignedBookings(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error fetching guide bookings:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssignedBookings();
+  }, [user]);
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa] flex flex-col">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#f5f7fa] relative">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100 sticky top-0 z-40">
+      <div className="bg-white border-b border-gray-100 sticky top-0 z-40 shrink-0">
         <div className="max-w-lg mx-auto px-4 h-16 flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-900" style={{ fontFamily: "Fraunces, serif" }}>
-            KuTo
+            KuTo Guide
           </h1>
           <button
-            onClick={() => {
-              logout();
+            onClick={async () => {
+              await logout();
               onNavigate("landing");
             }}
             className="flex items-center gap-1.5 px-3 py-1.5 border border-red-200 rounded-full text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
@@ -2728,63 +3053,150 @@ function GuideDashboardScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-          <div className="text-center mb-6">
-            <div className="w-24 h-24 bg-blue-50 border-4 border-[#1a7fd4] rounded-full flex items-center justify-center mx-auto mb-4 text-[#1a7fd4] text-3xl font-bold">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto pb-20 p-4">
+        {/* Profile Card */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-4 mb-4 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-blue-50 border-2 border-[#1a7fd4] rounded-full flex items-center justify-center text-[#1a7fd4] text-lg font-bold">
               {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "G"}
             </div>
-            <h2
-              className="text-2xl font-bold text-gray-900"
-              style={{ fontFamily: "Fraunces, serif" }}
-            >
-              {user?.firstName ? `${user.firstName} ${user.lastName || ""}` : "Guide User"}
-            </h2>
-            <span className="inline-block mt-2 px-3 py-1 bg-blue-50 text-[#1a7fd4] text-xs font-semibold rounded-full border border-blue-200">
-              Guide Profile
-            </span>
-          </div>
-
-          <div className="space-y-4 border-t border-gray-100 pt-6">
             <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Email Address
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">{user?.email}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Phone Number
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">
-                {user?.phone || "Not provided"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wider">
-                Account Type
-              </p>
-              <p className="text-sm font-semibold text-gray-800 mt-1">
-                Guide Account (Local Database)
-              </p>
+              <h2 className="text-sm font-bold text-gray-900">
+                {user?.fullName || `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || "Guide Partner"}
+              </h2>
+              <p className="text-[10px] text-gray-500">{user?.email} · Verified Guide</p>
             </div>
           </div>
         </div>
+
+        {/* Quick actions banner */}
+        <div className="bg-gradient-to-br from-[#1a7fd4] to-[#1268b3] rounded-2xl p-5 text-white mb-6">
+          <h3 className="text-base font-bold mb-1 leading-tight" style={{ fontFamily: "Fraunces, serif" }}>
+            Find Custom Bookings
+          </h3>
+          <p className="text-xs opacity-90 leading-relaxed mb-4">
+            Browse trip requests posted by travelers nearby. Propose your custom itinerary and counter-offer price.
+          </p>
+          <button
+            onClick={() => onNavigate("nearby-requests")}
+            className="w-full py-2.5 bg-white text-[#1a7fd4] text-xs font-bold rounded-lg hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5"
+          >
+            <Navigation className="w-4 h-4" /> Browse Nearby Requests
+          </button>
+        </div>
+
+        {/* Assigned Bookings List */}
+        <div className="mb-4">
+          <h3 className="text-sm font-bold text-gray-900 mb-3">Assigned Trips</h3>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-4 border-[#1a7fd4] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-gray-500 text-xs font-medium">Loading assigned trips...</p>
+            </div>
+          ) : assignedBookings.length === 0 ? (
+            <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-xs">
+              <p className="text-gray-500 text-xs leading-relaxed">No assigned trips yet.</p>
+              <p className="text-[10px] text-gray-400 mt-1">Submit bids on custom trip requests to get hired!</p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {assignedBookings.map((booking) => {
+                const travelerName = `${booking.users?.first_name || ""} ${booking.users?.last_name || ""}`.trim() || "Traveler User";
+                return (
+                  <Card key={booking.id} className="p-4 bg-white border border-gray-100 rounded-xl">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="font-bold text-sm text-gray-900">{booking.destination}</h4>
+                        <p className="text-[10px] text-gray-400 mt-0.5">
+                          {booking.travel_date ? new Date(booking.travel_date).toLocaleDateString() : "Flexible dates"} · {booking.duration_days} days
+                        </p>
+                        <p className="text-[10px] text-gray-500 mt-1.5 font-medium">
+                          Traveler: {travelerName} ({booking.group_size} travelers)
+                        </p>
+                      </div>
+                      <Badge variant="green">₹{booking.total_amount}</Badge>
+                    </div>
+                    {booking.special_notes && (
+                      <p className="text-[11px] text-gray-500 mt-2 p-2 bg-slate-50 rounded-lg italic">
+                        {booking.special_notes}
+                      </p>
+                    )}
+                    <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-end">
+                      <button
+                        onClick={() => onNavigate("chat", { bookingId: booking.id, travelerId: booking.traveler_id, partnerName: travelerName })}
+                        className="px-3.5 py-1.5 bg-[#1a7fd4] text-white text-[10px] font-bold rounded-lg hover:bg-[#1268b3] transition-colors flex items-center gap-1"
+                      >
+                        <MessageCircle className="w-3.5 h-3.5" /> Chat with Traveler
+                      </button>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
+      <BottomNav active="home" onNavigate={onNavigate} mode="guide" />
     </div>
   );
 }
 
 // ─── Screen 11: Nearby Requests ───────────────────────────────────────────────
 
-function NearbyRequestsScreen({ onNavigate }: { onNavigate: (s: Screen) => void }) {
+function NearbyRequestsScreen({ onNavigate }: { onNavigate: (s: Screen, data?: any) => void }) {
+  const { user } = useAuth();
   const [showCounterModal, setShowCounterModal] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<(typeof REQUESTS)[0] | null>(null);
-  const [dismissed, setDismissed] = useState<number[]>([]);
+  const [selectedRequest, setSelectedRequest] = useState<any | null>(null);
+  const [requests, setRequests] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchOpenBookings = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select("*, users!bookings_traveler_id_fkey(*)")
+        .is("guide_id", null)
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching open bookings:", error);
+      } else {
+        setRequests(data || []);
+      }
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOpenBookings();
+  }, []);
+
+  const handleDirectAccept = async (booking: any) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({
+          guide_id: user.id,
+          status: "confirmed"
+        })
+        .eq("id", booking.id);
+
+      if (error) throw error;
+      onNavigate("guide-dashboard");
+    } catch (err) {
+      console.error("Error accepting booking:", err);
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fa]">
+    <div className="flex-1 flex flex-col min-h-0 bg-[#f5f7fa] relative">
       <TopNav
         onNavigate={onNavigate}
         title="Nearby Requests"
@@ -2793,117 +3205,118 @@ function NearbyRequestsScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
         mode="guide"
       />
 
-      <div className="max-w-lg mx-auto px-4 py-6 pb-24">
-        <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 p-3 mb-5">
+      <div className="flex-1 overflow-y-auto pb-20 p-4">
+        <div className="flex items-center gap-3 bg-white rounded-2xl border border-gray-100 p-3 mb-4 shrink-0">
           <div className="w-10 h-10 rounded-xl bg-[#f0faf6] border border-[#c6eadc] flex items-center justify-center">
             <Navigation className="w-5 h-5 text-[#0ea472]" />
           </div>
           <div className="flex-1">
-            <p className="text-sm font-semibold text-gray-900">Kochi, Kerala</p>
-            <p className="text-xs text-gray-500">Showing requests within 10 km</p>
+            <p className="text-sm font-semibold text-gray-900">Kerala Region</p>
+            <p className="text-[10px] text-gray-500">Showing active custom requests</p>
           </div>
-          <button className="flex items-center gap-1.5 px-3 py-1.5 bg-[#f5f7fa] border border-gray-200 rounded-xl text-xs font-semibold text-gray-600">
-            <Filter className="w-3.5 h-3.5" /> Filter
-          </button>
         </div>
 
-        <div className="flex flex-col gap-4">
-          {REQUESTS.filter((r) => !dismissed.includes(r.id)).map((req) => (
-            <Card key={req.id} className="overflow-hidden">
-              <div className="p-4">
-                <div className="flex items-start gap-3">
-                  <Avatar src={req.avatar} size="md" alt={req.traveler} />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">{req.traveler}</p>
-                        <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
-                          <MapPin className="w-3 h-3" />
-                          {req.distance} away
-                        </p>
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="w-8 h-8 border-4 border-[#1a7fd4] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+            <p className="text-gray-500 text-xs font-medium">Fetching trip requests...</p>
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="bg-white border border-gray-100 rounded-2xl p-8 text-center shadow-xs">
+            <p className="text-gray-500 text-xs">No active custom trip requests at the moment.</p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {requests.map((req) => {
+              const travelerName = `${req.users?.first_name || ""} ${req.users?.last_name || ""}`.trim() || "Traveler";
+              return (
+                <Card key={req.id} className="overflow-hidden bg-white border border-gray-100">
+                  <div className="p-4">
+                    <div className="flex items-start gap-3">
+                      <Avatar src="photo-1507003211169-0a1dd7228f2d" size="md" alt={travelerName} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-semibold text-gray-900 text-sm">{travelerName}</p>
+                            <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-0.5">
+                              <MapPin className="w-3 h-3" />
+                              Active request
+                            </p>
+                          </div>
+                          <Badge variant="blue">Custom Trip</Badge>
+                        </div>
                       </div>
-                      <Badge variant="blue">{req.style}</Badge>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      <div className="bg-[#f5f7fa] rounded-xl p-2.5 text-center">
+                        <MapPin className="w-4 h-4 text-[#1a7fd4] mx-auto mb-1" />
+                        <p className="text-[11px] font-bold text-gray-900 leading-tight truncate">
+                          {req.destination}
+                        </p>
+                        <p className="text-[9px] text-gray-400">Destination</p>
+                      </div>
+                      <div className="bg-[#f5f7fa] rounded-xl p-2.5 text-center">
+                        <DollarSign className="w-4 h-4 text-[#1a7fd4] mx-auto mb-1" />
+                        <p className="text-[11px] font-bold text-gray-900 leading-tight">
+                          ₹{req.total_amount}
+                        </p>
+                        <p className="text-[9px] text-gray-400">Budget</p>
+                      </div>
+                      <div className="bg-[#f5f7fa] rounded-xl p-2.5 text-center">
+                        <Calendar className="w-4 h-4 text-[#1a7fd4] mx-auto mb-1" />
+                        <p className="text-[11px] font-bold text-gray-900 leading-tight">
+                          {req.travel_date ? new Date(req.travel_date).toLocaleDateString(undefined, {month: 'short', day: 'numeric'}) : "Flex"}
+                        </p>
+                        <p className="text-[9px] text-gray-400">Date</p>
+                      </div>
+                    </div>
+
+                    {req.special_notes && (
+                      <div className="mt-3 bg-gray-50 rounded-xl p-3">
+                        <p className="text-xs text-gray-500 italic">"{req.special_notes}"</p>
+                      </div>
+                    )}
+
+                    <div className="mt-3 flex items-center gap-1.5">
+                      <Users className="w-3.5 h-3.5 text-gray-400" />
+                      <span className="text-[10px] text-gray-500">{req.group_size} travelers · {req.duration_days} days</span>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="bg-[#f5f7fa] rounded-xl p-2.5 text-center">
-                    <MapPin className="w-4 h-4 text-[#0ea472] mx-auto mb-1" />
-                    <p className="text-xs font-semibold text-gray-900 leading-tight">
-                      {req.destination.split(",")[0]}
-                    </p>
-                    <p className="text-[10px] text-gray-400">Destination</p>
+                  <div className="px-4 pb-4 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setSelectedRequest(req);
+                        setShowCounterModal(true);
+                      }}
+                      className="flex-1 py-2.5 rounded-xl border border-[#1a7fd4] text-xs font-semibold text-[#1a7fd4] hover:bg-blue-50 flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <DollarSign className="w-3.5 h-3.5" /> Bid / Counter
+                    </button>
+                    <button
+                      onClick={() => handleDirectAccept(req)}
+                      className="flex-1 py-2.5 rounded-xl bg-[#0ea472] text-xs font-semibold text-white hover:bg-[#0c9266] flex items-center justify-center gap-1 transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" /> Accept Terms
+                    </button>
                   </div>
-                  <div className="bg-[#f5f7fa] rounded-xl p-2.5 text-center">
-                    <DollarSign className="w-4 h-4 text-[#0ea472] mx-auto mb-1" />
-                    <p className="text-xs font-semibold text-gray-900 leading-tight">
-                      {req.budget}
-                    </p>
-                    <p className="text-[10px] text-gray-400">Budget</p>
-                  </div>
-                  <div className="bg-[#f5f7fa] rounded-xl p-2.5 text-center">
-                    <Calendar className="w-4 h-4 text-[#0ea472] mx-auto mb-1" />
-                    <p className="text-xs font-semibold text-gray-900 leading-tight">{req.date}</p>
-                    <p className="text-[10px] text-gray-400">Dates</p>
-                  </div>
-                </div>
-
-                <div className="mt-3 bg-gray-50 rounded-xl p-3">
-                  <p className="text-xs text-gray-500 italic">"{req.notes}"</p>
-                </div>
-
-                <div className="mt-3 flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-gray-400" />
-                  <span className="text-xs text-gray-500">{req.travelers} travelers</span>
-                </div>
-              </div>
-
-              <div className="px-4 pb-4 flex gap-2">
-                <button
-                  onClick={() => setDismissed((d) => [...d, req.id])}
-                  className="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-gray-500 hover:bg-gray-50 flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <X className="w-3.5 h-3.5" /> Ignore
-                </button>
-                <button
-                  onClick={() => {
-                    setSelectedRequest(req);
-                    setShowCounterModal(true);
-                  }}
-                  className="flex-1 py-2.5 rounded-xl border border-[#1a7fd4] text-xs font-semibold text-[#1a7fd4] hover:bg-blue-50 flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <DollarSign className="w-3.5 h-3.5" /> Counter
-                </button>
-                <button
-                  onClick={() => onNavigate("chat")}
-                  className="flex-1 py-2.5 rounded-xl bg-[#0ea472] text-xs font-semibold text-white hover:bg-[#0c9266] flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <Check className="w-3.5 h-3.5" /> Accept
-                </button>
-              </div>
-            </Card>
-          ))}
-
-          {dismissed.length === REQUESTS.length && (
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-sm mb-3">No more nearby requests right now.</p>
-              <Btn variant="outline" size="sm" onClick={() => setDismissed([])}>
-                Reset
-              </Btn>
-            </div>
-          )}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Counter Offer Modal */}
-      {showCounterModal && selectedRequest && (
+      {showCounterModal && selectedRequest && user && (
         <CounterOfferModal
           request={selectedRequest}
+          guideId={user.id}
           onClose={() => setShowCounterModal(false)}
           onSend={() => {
             setShowCounterModal(false);
-            onNavigate("guide-dashboard");
+            fetchOpenBookings();
           }}
         />
       )}
@@ -2912,25 +3325,50 @@ function NearbyRequestsScreen({ onNavigate }: { onNavigate: (s: Screen) => void 
   );
 }
 
-// ─── Screen 12: Counter Offer Modal ───────────────────────────────────────────
-
 function CounterOfferModal({
   request,
+  guideId,
   onClose,
   onSend,
 }: {
-  request: (typeof REQUESTS)[0];
+  request: any;
+  guideId: string;
   onClose: () => void;
   onSend: () => void;
 }) {
-  const [price, setPrice] = useState(3500);
+  const [price, setPrice] = useState(request.total_amount || 5000);
+  const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState(
-    "Hello! I'd love to guide you through Kochi. I have a special route that covers hidden backwater villages and local eateries that aren't in any guidebook."
+    "Hello! I'd love to guide you through Kerala. I can prepare a custom itinerary tailored exactly to your style."
   );
+
+  const handleSubmitCounter = async () => {
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from("offers")
+        .insert({
+          booking_id: request.id,
+          guide_id: guideId,
+          price,
+          message: msg,
+          status: "pending"
+        });
+
+      if (error) throw error;
+      onSend();
+    } catch (err) {
+      console.error("Error sending counter offer:", err);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const travelerName = `${request.users?.first_name || ""} ${request.users?.last_name || ""}`.trim() || "Traveler";
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-end justify-center md:items-center">
-      <div className="bg-white w-full max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl">
+      <div className="bg-white w-full max-w-lg rounded-t-3xl md:rounded-3xl shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
           <h3 className="text-lg font-bold text-gray-900">Send Counter Offer</h3>
           <button
@@ -2944,11 +3382,11 @@ function CounterOfferModal({
         <div className="px-5 py-5 flex flex-col gap-5">
           {/* Traveler info */}
           <div className="flex items-center gap-3 bg-[#f5f7fa] rounded-xl p-3">
-            <Avatar src={request.avatar} size="sm" alt={request.traveler} />
+            <Avatar src="photo-1507003211169-0a1dd7228f2d" size="sm" alt={travelerName} />
             <div>
-              <p className="text-sm font-semibold text-gray-900">{request.traveler}</p>
+              <p className="text-sm font-semibold text-gray-900">{travelerName}</p>
               <p className="text-xs text-gray-500">
-                {request.destination} · {request.date} · Budget {request.budget}
+                {request.destination} · {request.duration_days} days · Budget ₹{request.total_amount}
               </p>
             </div>
           </div>
@@ -2964,16 +3402,16 @@ function CounterOfferModal({
             <input
               type="range"
               min={1000}
-              max={10000}
-              step={100}
+              max={50000}
+              step={500}
               value={price}
               onChange={(e) => setPrice(parseInt(e.target.value))}
-              className="w-full accent-[#0ea472]"
+              className="w-full accent-[#1a7fd4]"
             />
             <div className="flex justify-between text-xs text-gray-400 mt-1">
               <span>₹1,000</span>
-              <span className="text-[#0ea472] font-semibold">Their budget: {request.budget}</span>
-              <span>₹10,000</span>
+              <span className="text-[#1a7fd4] font-semibold">Their budget: ₹{request.total_amount}</span>
+              <span>₹50,000</span>
             </div>
           </div>
 
@@ -2984,12 +3422,14 @@ function CounterOfferModal({
               value={msg}
               onChange={(e) => setMsg(e.target.value)}
               rows={4}
-              className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#0ea472]/30 focus:border-[#0ea472] resize-none transition-all"
+              className="w-full bg-[#f5f7fa] border border-transparent rounded-xl p-4 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#1a7fd4]/30 focus:border-[#1a7fd4] resize-none transition-all"
             />
           </div>
 
-          <Btn size="lg" className="w-full" onClick={onSend}>
-            <Send className="w-4 h-4" /> Send Offer · ₹{price}
+          <Btn size="lg" className="w-full justify-center" onClick={handleSubmitCounter} disabled={submitting}>
+            {submitting ? "Sending..." : <>
+              <Send className="w-4 h-4" /> Send Offer · ₹{price}
+            </>}
           </Btn>
         </div>
       </div>
@@ -4778,7 +5218,6 @@ function AppContent() {
       "destination",
       "packages",
       "package-detail",
-      "custom-trip",
       "request-submitted",
       "login",
       "traveler-signup",
@@ -4791,7 +5230,7 @@ function AppContent() {
     ];
 
     // Protected traveler routes
-    const travelerRoutes: Screen[] = ["traveler-dashboard", "offers", "chat"];
+    const travelerRoutes: Screen[] = ["traveler-dashboard", "offers", "chat", "custom-trip"];
 
     // Protected guide routes
     const guideRoutes: Screen[] = ["guide-dashboard", "nearby-requests", "counter-offer"];
@@ -4911,8 +5350,8 @@ function AppContent() {
         />
       )}
       {screen === "traveler-dashboard" && <TravelerDashboardScreen onNavigate={navigate} />}
-      {screen === "offers" && <OffersScreen onNavigate={navigate} />}
-      {screen === "chat" && <ChatScreen onNavigate={navigate} />}
+      {screen === "offers" && <OffersScreen onNavigate={navigate} booking={screenData} />}
+      {screen === "chat" && <ChatScreen onNavigate={navigate} params={screenData} />}
       {screen === "guide-dashboard" && <GuideDashboardScreen onNavigate={navigate} />}
       {screen === "nearby-requests" && <NearbyRequestsScreen onNavigate={navigate} />}
       {screen === "guide-landing" && <GuideLandingScreen onNavigate={navigate} />}
@@ -4941,7 +5380,33 @@ function AppContent() {
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <div className="min-h-screen bg-[#0f172a] md:bg-slate-950 md:flex md:items-center md:justify-center md:py-6 font-sans">
+        {/* Mobile Device Simulator Container */}
+        <div className="w-full min-h-screen bg-white flex flex-col relative
+                        md:min-h-0 md:w-[412px] md:h-[840px] md:rounded-[48px] md:shadow-2xl md:ring-12 md:ring-slate-900 md:overflow-hidden border border-gray-150">
+          
+          {/* Top Status Bar (Only on Desktop Simulator) */}
+          <div className="hidden md:flex h-8 bg-slate-900 text-white/90 items-center justify-between px-6 text-[11px] select-none shrink-0 z-50">
+            <span className="font-semibold">9:41</span>
+            <div className="flex items-center gap-1.5">
+              <span className="opacity-90">LTE</span>
+              <div className="w-5 h-2.5 border border-white/50 rounded-sm p-0.5 flex items-center">
+                <div className="w-full h-full bg-white rounded-2xs" />
+              </div>
+            </div>
+          </div>
+          
+          {/* Main App Viewport */}
+          <div className="flex-1 overflow-hidden relative flex flex-col min-h-0 bg-white">
+            <AppContent />
+          </div>
+
+          {/* Bottom Home Indicator Bar (Only on Desktop Simulator) */}
+          <div className="hidden md:flex h-4 bg-slate-900 items-center justify-center pb-1 z-50 shrink-0">
+            <div className="w-28 h-1 bg-white/40 rounded-full" />
+          </div>
+        </div>
+      </div>
     </AuthProvider>
   );
 }

@@ -120,12 +120,23 @@ export default function TravelerSignUpScreen({
           onNavigate("traveler-dashboard");
         }
       } else {
-        setError(result.error || "Registration successful but login failed");
+        // Handle email confirmation required gracefully
+        const errMsg = result.error || "";
+        if (
+          errMsg.toLowerCase().includes("email not confirmed") ||
+          errMsg.toLowerCase().includes("not confirmed")
+        ) {
+          setError(
+            "Registration successful! Please check your email inbox and click the confirmation link, then come back to log in."
+          );
+        } else {
+          setError(errMsg || "Registration successful but login failed. Please try logging in.");
+        }
         setIsLoading(false);
       }
     } catch (err) {
-      console.error("[v0] Signup error:", err);
-      setError("An error occurred during registration");
+      console.error("[signup] Error:", err);
+      setError("An error occurred during registration. Please try again.");
       setIsLoading(false);
     }
   };
