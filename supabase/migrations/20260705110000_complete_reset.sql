@@ -11,6 +11,8 @@ drop trigger if exists on_auth_user_created on auth.users;
 
 -- Drop all project tables (cascade removes all policies, indexes, FKs)
 drop table if exists public.support_tickets  cascade;
+drop table if exists public.messages         cascade;
+drop table if exists public.offers           cascade;
 drop table if exists public.reviews          cascade;
 drop table if exists public.bookings         cascade;
 drop table if exists public.pending_guides   cascade;
@@ -86,7 +88,7 @@ create table public.travelers (
 create table public.bookings (
   id              uuid primary key default gen_random_uuid(),
   traveler_id     uuid not null references public.travelers(id) on delete cascade,
-  guide_id        uuid not null references public.guides(id)    on delete cascade,
+  guide_id        uuid references public.guides(id)    on delete cascade,
   travel_date     date,
   duration_days   int         not null default 1,
   destination     text,
@@ -110,6 +112,28 @@ create table public.reviews (
   created_at  timestamptz not null default now()
 );
 
+-- ── 3ee. OFFERS (guide bids on custom trip bookings) ──────────
+create table public.offers (
+  id              uuid primary key default gen_random_uuid(),
+  booking_id      uuid not null references public.bookings(id) on delete cascade,
+  guide_id        uuid not null references public.guides(id)    on delete cascade,
+  price           numeric     not null default 0,
+  message         text,
+  status          text        not null default 'pending'
+                  check (status in ('pending','accepted','rejected')),
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+
+-- ── 3eee. MESSAGES (chat logs between traveler and guide) ────
+create table public.messages (
+  id              uuid primary key default gen_random_uuid(),
+  booking_id      uuid not null references public.bookings(id) on delete cascade,
+  sender_id       uuid not null references public.users(auth_user_id) on delete cascade,
+  text            text        not null,
+  created_at      timestamptz not null default now()
+);
+
 -- ── 3f. SUPPORT TICKETS ───────────────────────────────────────
 create table public.support_tickets (
   id          uuid primary key default gen_random_uuid(),
@@ -131,6 +155,8 @@ alter table public.users           enable row level security;
 alter table public.guides          enable row level security;
 alter table public.travelers       enable row level security;
 alter table public.bookings        enable row level security;
+alter table public.offers          enable row level security;
+alter table public.messages        enable row level security;
 alter table public.reviews         enable row level security;
 alter table public.support_tickets enable row level security;
 
@@ -230,17 +256,37 @@ create policy "bookings: traveler own select"
 
 create policy "bookings: guide own select"
   on public.bookings for select
-  using (guide_id = (
-    select id from public.guides where id = auth.uid()
-  ));
+  using (
+    guide_id = auth.uid()
+    or (
+      guide_id is null
+      and exists (
+        select 1 from public.guides g
+        where g.id = auth.uid() and g.status = 'approved'
+      )
+    )
+  );
 
 create policy "bookings: traveler insert"
   on public.bookings for insert
   with check (traveler_id = auth.uid());
 
+create policy "bookings: traveler update"
+  on public.bookings for update
+  using (traveler_id = auth.uid());
+
 create policy "bookings: guide update status"
   on public.bookings for update
-  using (guide_id = auth.uid());
+  using (
+    guide_id = auth.uid()
+    or (
+      guide_id is null
+      and exists (
+        select 1 from public.guides g
+        where g.id = auth.uid() and g.status = 'approved'
+      )
+    )
+  );
 
 create policy "bookings: admins select all"
   on public.bookings for select
@@ -249,6 +295,55 @@ create policy "bookings: admins select all"
     where u.auth_user_id = auth.uid()
       and u.role in ('guide_admin','traveler_admin','super_admin')
   ));
+
+-- ── offers policies ───────────────────────────────────────────
+create policy "offers: traveler view offers"
+  on public.offers for select
+  using (exists (
+    select 1 from public.bookings b
+    where b.id = booking_id and b.traveler_id = auth.uid()
+  ));
+
+create policy "offers: guide view own"
+  on public.offers for select
+  using (guide_id = auth.uid());
+
+create policy "offers: guide insert offer"
+  on public.offers for insert
+  with check (
+    guide_id = auth.uid()
+    and exists (
+      select 1 from public.guides g
+      where g.id = auth.uid() and g.status = 'approved'
+    )
+  );
+
+create policy "offers: traveler update status"
+  on public.offers for update
+  using (exists (
+    select 1 from public.bookings b
+    where b.id = booking_id and b.traveler_id = auth.uid()
+  ));
+
+-- ── messages policies ─────────────────────────────────────────
+create policy "messages: select"
+  on public.messages for select
+  using (exists (
+    select 1 from public.bookings b
+    where b.id = booking_id
+      and (b.traveler_id = auth.uid() or b.guide_id = auth.uid())
+  ));
+
+create policy "messages: insert"
+  on public.messages for insert
+  with check (
+    sender_id = auth.uid()
+    and exists (
+      select 1 from public.bookings b
+      where b.id = booking_id
+        and (b.traveler_id = auth.uid() or b.guide_id = auth.uid())
+    )
+  );
 
 -- ── reviews policies ──────────────────────────────────────────
 create policy "reviews: public select"
